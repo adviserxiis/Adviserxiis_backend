@@ -112,7 +112,7 @@ const sendConfirmationMail =  async(req, res) =>{
       const service = await getService(serviceid)
       const payment = await getPayement(paymentid)
       const meetingid = uuidv1();
-      const meetingLink =`https://adviserxiis.vercel.app/room/${meetingid}`
+      const meetingLink =`https://www.adviserxiis.com/room/${meetingid}`
       
       
       // async..await is not allowed in global scope, must use a wrapper
