@@ -6,6 +6,7 @@ import Razorpay from 'razorpay';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import bodyParser from 'body-parser';
+import { sendChangePasswordOtp } from './Controllers/ChangePasswordOtp.js';
 
 const PORT = process.env.PORT || 8000
 
@@ -73,7 +74,10 @@ try {
 
 app.get('/sendemail/:userId', sendMail)
 
+app.get('/changepassword/:userId', sendChangePasswordOtp)
+
 app.post('/sendconfirmationemail', sendConfirmationMail)
+
 
 app.listen(PORT, () =>{
     console.log(`Server is running at ${PORT}`)
