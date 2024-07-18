@@ -4,9 +4,11 @@ import otpGenerator from 'otp-generator'
 import {app} from '../firebase.js'
 import { getDatabase, ref, get, update } from 'firebase/database';
 import { v1 as uuidv1 } from 'uuid';
+import { getAuth } from 'firebase/auth';
 
 
 const database = getDatabase(app);
+const auth = getAuth();
 
 function convertDateFormat(dateString) {
     // Split the input date string by the hyphen
