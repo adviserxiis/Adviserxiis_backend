@@ -4,11 +4,12 @@ import otpGenerator from 'otp-generator'
 import {app} from '../firebase.js'
 import { getDatabase, ref, get, update } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
+import { database } from '../firebaseAdmin.js'
 
 
-const database = getDatabase(app);
+// const database = getDatabase(app);
 
-const auth = getAuth();
+// const auth = getAuth(app);
 
 const generateOTP = () => {
     return otpGenerator.generate(6, {
@@ -85,8 +86,10 @@ const sendMail =  async(req, res) =>{
     
             res.status(200).json("OTP send successfully")
           }
-
-           res.json("User does not exist with this email")
+          else{
+            res.json("User does not exist with this email")
+          }
+           
         
       }
       
