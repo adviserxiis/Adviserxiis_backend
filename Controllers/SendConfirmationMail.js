@@ -5,10 +5,10 @@ import {app} from '../firebase.js'
 import { getDatabase, ref, get, update } from 'firebase/database';
 import { v1 as uuidv1 } from 'uuid';
 import { getAuth } from 'firebase/auth';
-import { database } from '../firebaseAdmin.js'
+// import { database } from '../firebaseAdmin.js'
 
 
-// const database = getDatabase(app);
+const database = getDatabase(app);
 // const auth = getAuth();
 
 function convertDateFormat(dateString) {

@@ -3,10 +3,10 @@ import otpGenerator from 'otp-generator'
 
 import {app} from '../firebase.js'
 import { getDatabase, ref, get, update } from 'firebase/database';
-import { database } from '../firebaseAdmin.js'
+// import { database } from '../firebaseAdmin.js'
 
 
-// const database = getDatabase(app);
+const database = getDatabase(app);
 
 
 const generateOTP = () => {
