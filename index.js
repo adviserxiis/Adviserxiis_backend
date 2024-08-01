@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import crypto from 'crypto';
 import bodyParser from 'body-parser';
 import { sendChangePasswordOtp } from './Controllers/ChangePasswordOtp.js';
+import adviserRoutes from './Routes/AdviserRoutes.js'
 
 const PORT = process.env.PORT || 8000
 
@@ -77,6 +78,9 @@ app.get('/sendemail/:userId', sendMail)
 app.get('/changepassword/:userId', sendChangePasswordOtp)
 
 app.post('/sendconfirmationemail', sendConfirmationMail)
+
+
+app.use('/adviser', adviserRoutes)
 
 
 app.listen(PORT, () =>{

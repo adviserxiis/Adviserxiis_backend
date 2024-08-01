@@ -10,8 +10,11 @@ const serviceAccount = require("./serviceAccountKey.json");
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://adviserxiis-920e5-default-rtdb.firebaseio.com"
+    databaseURL: "https://adviserxiis-920e5-default-rtdb.firebaseio.com",
+    storageBucket: "adviserxiis-920e5.appspot.com"
   });
 
 const database = admin.database();
-export { admin, database };
+const storage = admin.storage().bucket();
+
+export { admin, database, storage };
