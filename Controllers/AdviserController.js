@@ -1,9 +1,12 @@
-import { database, storage } from '../firebaseAdmin.js'
+import { database } from '../firebaseAdmin.js'
 import bcrypt from 'bcryptjs'
 import { v1 as uuidv1 } from 'uuid';
 import multer from 'multer';
+import { ref as sRef, uploadBytesResumable } from 'firebase/storage';
+import { getDownloadURL, getStorage, uploadBytes } from 'firebase/storage'
 
 
+const storage = getStorage()
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -16,6 +19,23 @@ const hashPassword = async (password) => {
     console.log("Error hashing password:", error);
   }
 };
+
+async function getAdviser(adviserid) {
+  // const nodeRef = ref(database, `advisers/${userId}`);
+  try {
+    // const snapshot = await get(nodeRef)
+    const snapshot = await database.ref(`advisers/${adviserid}`).once('value')
+    if (snapshot.exists()) {
+      return snapshot.val();
+    } else {
+      console.log('No data available');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching node details:', error);
+    return null;
+  }
+}
 
 
 const isUserExist = async (email, mobileNumber) => {
@@ -180,54 +200,12 @@ const saveBankDetails = async (req, res) => {
 };
 
 
-// const documentUpload = async (req, res) => {
-
-//   console.log("body", req.body)
-//   console.log("files", req.files)
-//   const { adviserid } = req.body;
-//   const files = req.files;
-
-//   if (!adviserid || !files) {
-//     return res.status(400).json({ error: 'Adviser ID and files are required' });
-//   }
-
-//   const fileKeys = ['profile_photo', 'aadhar_front', 'aadhar_back'];
-//   const uploadPromises = [];
-
-//   fileKeys.forEach(key => {
-//     if (files[key]) {
-//       const file = files[key][0];
-//       const fileRef = `images/${uuidv1()}`;
-//       uploadPromises.push(
-//         storage.file(fileRef).save(file.buffer).then(() => storage.file(fileRef).getSignedUrl({ action: 'read', expires: '03-17-2025' }))
-//       );
-//     }
-//   });
-
-//   try {
-//     const urls = await Promise.all(uploadPromises);
-
-//     const updateData = {};
-//     fileKeys.forEach((key, index) => {
-//       if (files[key]) {
-//         updateData[key] = urls[index][0]; // Signed URL
-//       }
-//     });
-
-//     console.log("updated data", updateData)
-
-//     // await database.ref('advisers/' + adviserid).update(updateData);
-
-//     res.status(200).json({ message: 'Files uploaded and data updated successfully', urls: updateData });
-//   } catch (error) {
-//     console.error('Error during file upload:', error);
-//     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
-//   }
-// };
-
  const documentUpload = async (req, res) => {
   const { adviserid } = req.body;
   const files = req.files;
+
+  console.log("req", req.body)
+  console.log("filess", req.files)
 
   if (!adviserid || !files) {
     return res.status(400).json({ error: 'Adviser ID and files are required' });
@@ -236,28 +214,42 @@ const saveBankDetails = async (req, res) => {
   const fileKeys = ['profile_photo', 'aadhar_front', 'aadhar_back'];
   const uploadPromises = [];
 
-  fileKeys.forEach(key => {
-    if (files[key]) {
-      const file = files[key][0];
-      const fileRef = storage.file(`images/${uuidv1()}`);
-      uploadPromises.push(
-        fileRef.save(file.buffer).then(() => fileRef.getSignedUrl({ action: 'read' }))
-      );
+  async function uploadFiles() {
+    for (const key of fileKeys) {
+      if (files[key]) {
+        console.log("hiii")
+        console.log("key", key)
+        const file = files[key][0];
+        const storageRef = sRef(storage, `images/${uuidv1()}`);
+        const metadata = {
+          contentType: file.mimetype,
+        };
+        const snapshot = await uploadBytesResumable(storageRef, file.buffer, metadata);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+  
+        uploadPromises.push(Promise.resolve(downloadURL)); 
+      }
     }
-  });
+  
+    const downloadURLs = await Promise.all(uploadPromises);
+    return downloadURLs; 
+  }
 
   try {
-    const urls = await Promise.all(uploadPromises);
 
+    const urls = await uploadFiles();
     const updateData = {};
+
+    console.log("urls", urls);
+
     fileKeys.forEach((key, index) => {
       if (files[key]) {
-        updateData[key] = urls[index][0]; // Public URL
+        updateData[key] = urls[index]; 
       }
     });
 
-    // await database.ref('advisers/' + adviserid).update(updateData);
-    console.log("updated", updateData)
+    await database.ref('advisers/' + adviserid).update(updateData);
+
 
     res.status(200).json({ message: 'Files uploaded and data updated successfully', urls: updateData });
   } catch (error) {
@@ -266,6 +258,46 @@ const saveBankDetails = async (req, res) => {
   }
 };
 
+const verifyOTP = async (req, res) =>{
+  const { adviserid, otp } = req.body;
+
+   if( !adviserid || !otp )
+    {
+     return res.status(400).json({ error: 'Fill all the details' });
+    }
+
+  try {
+    const user = await getAdviser(adviserid);
+    
+    if (user && otp === user.otp) {
+      // OTP is correct, update the user's verification status
+      // await update(ref(database, 'advisers/' + userId), {
+      //   isVerified: true
+      // });
+
+      await database.ref('advisers/' + adviserid).update({
+        isVerified: true
+      });
+
+      res.status(200).json({
+        message: 'OTP Verified Successfully!',
+        isVerified: true
+      });
+    } else {
+      // OTP is incorrect
+      res.status(400).json({
+        message: 'Wrong OTP!',
+        isVerified: false
+      });
+    }
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
+    res.status(500).json({
+      message: 'Internal Server Error'
+    });
+  }
+}
+
 
 export {
     loginAdviser,
@@ -273,5 +305,6 @@ export {
     saveProfessionalDetails,
     saveBankDetails,
     upload,
-    documentUpload
+    documentUpload,
+    verifyOTP
 }
