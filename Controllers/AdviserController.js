@@ -298,6 +298,22 @@ const verifyOTP = async (req, res) =>{
   }
 }
 
+const getAdviserDetails = async (req, res) => {
+  const adviserId = req.params.adviserId;
+
+  try {
+    const snapshot = await database.ref(`advisers/${adviserId}`).once('value');
+    if (snapshot.exists()) {
+      res.status(200).json(snapshot.val());
+    } else {
+      res.status(404).json({ message: 'No data available' });
+    }
+  } catch (error) {
+    console.error('Error fetching adviser details:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 export {
     loginAdviser,
@@ -306,5 +322,6 @@ export {
     saveBankDetails,
     upload,
     documentUpload,
-    verifyOTP
+    verifyOTP,
+    getAdviserDetails
 }

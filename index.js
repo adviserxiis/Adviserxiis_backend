@@ -8,6 +8,8 @@ import crypto from 'crypto';
 import bodyParser from 'body-parser';
 import { sendChangePasswordOtp } from './Controllers/ChangePasswordOtp.js';
 import adviserRoutes from './Routes/AdviserRoutes.js'
+import userRoutes from './Routes/UserRoutes.js'
+import postRoutes from './Routes/PostRoutes.js'
 
 const PORT = process.env.PORT || 8000
 
@@ -81,6 +83,10 @@ app.post('/sendconfirmationemail', sendConfirmationMail)
 
 
 app.use('/adviser', adviserRoutes)
+
+app.use('/user',userRoutes)
+
+app.use('/post',postRoutes)
 
 
 app.listen(PORT, () =>{
