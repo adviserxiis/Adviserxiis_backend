@@ -6,7 +6,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-console.log("env",process.env)
 const require = createRequire(import.meta.url);
 // const admin = require('firebase-admin');
 // const serviceAccount = require("./serviceAccountKey.json");
