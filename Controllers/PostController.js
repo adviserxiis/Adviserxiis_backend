@@ -183,10 +183,44 @@ const getAllPostsOfAdviser = async (req, res) => {
   }
 };
 
+const createPost = async (req, res) => {
+  const { adviserid } = req.body;
+  const file = req.file;
+
+  if (!adviserid || !file) {
+      return res.status(400).json({ error: 'Adviser ID and video file are required' });
+  }
+
+  try {
+      const postid = uuidv1();
+      const fileRef = sRef(storage, `posts/${postid}`);
+      const metadata = {
+          contentType: file.mimetype,
+      };
+
+      const snapshot = await uploadBytes(fileRef, file.buffer, metadata);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      const postData = {
+          postid,
+          videoURL: downloadURL,
+          adviserid,
+          dop: new Date().toString(), // Date of posting
+      };
+
+      await database.ref('advisers_posts/' + postid).set(postData);
+
+      res.status(200).json({ message: 'Video uploaded and data saved successfully', videoURL: downloadURL });
+  } catch (error) {
+      console.error('Error during video upload:', error);
+      res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+  }
+};
+
 export {
     getAllPostsWithAdviser,
     addLike,
     removeLike,
-    getAllPostsOfAdviser
+    getAllPostsOfAdviser,createPost
 
 }
