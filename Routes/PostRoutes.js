@@ -1,14 +1,17 @@
 import { Router } from "express";
-import { addLike, getAllPostsOfAdviser, getAllPostsWithAdviser, removeLike } from "../Controllers/PostController.js";
+import { addLike, createPost, getAllPostsOfAdviser, getAllPostsWithAdviser, removeLike } from "../Controllers/PostController.js";
+import multer from 'multer';
 
 
 const router = new Router();
+const upload = multer();
 
 
 router.route('/getallpostswithadviserdetails').get(getAllPostsWithAdviser)
 router.route('/addlike').post(addLike)
 router.route('/removelike').post(removeLike)
 router.route('/getpostsofadviser/:adviserid').get(getAllPostsOfAdviser)
+router.post('/createpost', upload.single('video'), createPost);
 
 
 export default router;
