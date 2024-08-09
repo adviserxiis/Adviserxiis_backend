@@ -160,8 +160,26 @@ const saveDetails = async (req, res) => {
 }
 
 
+const getUserDetails = async (req, res) => {
+    const userid = req.params.userid;
+  
+    try {
+      const snapshot = await database.ref(`test/${userid}`).once('value');
+      if (snapshot.exists()) {
+        res.status(200).json(snapshot.val());
+      } else {
+        res.status(404).json({ message: 'No data available' });
+      }
+    } catch (error) {
+      console.error('Error fetching adviser details:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+
 export {
     signUp,
     login,
-    saveDetails
+    saveDetails,
+    getUserDetails
 }

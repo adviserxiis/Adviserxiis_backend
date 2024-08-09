@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from 'multer';
-import { login, saveDetails, signUp } from "../Controllers/TestController.js";
+import { getUserDetails, login, saveDetails, signUp } from "../Controllers/TestController.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -14,6 +14,7 @@ router.post('/savedetails', upload.fields([
     { name: 'profile_photo' },
     { name: 'profile_background' },
   ]),saveDetails );
+  router.route('/getuser/:userid').get(getUserDetails)
 
 
 
