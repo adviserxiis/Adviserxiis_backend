@@ -274,7 +274,7 @@ const sendResetPasswordOtp = async (req, res) => {
                 from: 'adviserxiis@gmail.com', // sender address
                 to: email, // list of receivers
                 subject: "OTP from Luink.ai", // Subject line
-                text: `Your one time password for change passsword is ${otp}. Thank you for joining with Adviserxiis.`, // plain text body
+                text: `Your one time password for change passsword is ${otp}. Thank you for joining with Luink.ai.`, // plain text body
                 //   html: "<b>Hello world?</b>",  html body
             });
             res.status(200).json({message:"OTP send successfully", userid:userid})
