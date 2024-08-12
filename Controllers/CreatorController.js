@@ -176,10 +176,33 @@ const getUserDetails = async (req, res) => {
     }
   };
 
+  const getUserByUsername = async (req, res) => {
+    const key = req.params.key || '';
+  
+    try {
+      const snapshot = await database.ref('advisers').once('value');
+      const advisers = snapshot.val();
+      
+      if (!advisers) {
+        return res.status(404).json({ message: 'No data available' });
+      }
+  
+      // Filter users based on the key, or return the full list if the key is empty
+      const filteredAdvisers = Object.values(advisers)
+        .filter(adviser => key ? adviser.username.toLowerCase().includes(key.toLowerCase()) : true);
+  
+      res.status(200).json(filteredAdvisers);
+    } catch (error) {
+      console.error('Error fetching advisers:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
 
 export {
     signUp,
     login,
     saveDetails,
-    getUserDetails
+    getUserDetails,
+    getUserByUsername
 }
