@@ -184,7 +184,7 @@ const getAllPostsOfAdviser = async (req, res) => {
 };
 
 const createPost = async (req, res) => {
-  const { adviserid } = req.body;
+  const { adviserid, description } = req.body;
   const file = req.file;
 
   if (!adviserid || !file) {
@@ -201,16 +201,36 @@ const createPost = async (req, res) => {
       const snapshot = await uploadBytes(fileRef, file.buffer, metadata);
       const downloadURL = await getDownloadURL(snapshot.ref);
 
+      const fileType = file.mimetype.startsWith('video/') ? 'video' : 'image';
+
       const postData = {
-          postid,
-          videoURL: downloadURL,
-          adviserid,
-          dop: new Date().toString(), // Date of posting
+          adviserid: adviserid,
+          post_file: downloadURL,
+          file_type: fileType,
+          dop: new Date().toString(),
+          views: 0,
+          likes: [],
       };
 
+      if(description)
+      {
+        postData.description = description
+      }
+      
       await database.ref('advisers_posts/' + postid).set(postData);
 
-      res.status(200).json({ message: 'Video uploaded and data saved successfully', videoURL: downloadURL });
+      const adviserData = await getAdviser(adviserid)
+      const currentPosts = adviserData.data.posts || []; // Retrieve existing IDs or initialize to an empty array
+
+      // Add the new ID to the array
+      const updatedPosts = [...currentPosts, postid];
+
+      // Update the array field in the database
+      await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
+
+
+
+      res.status(200).json({ message: 'Video uploaded and data saved successfully', videoURL: downloadURL, updatedPosts, postData });
   } catch (error) {
       console.error('Error during video upload:', error);
       res.status(500).json({ error: 'Something went wrong. Please try again later.' });
@@ -221,6 +241,7 @@ export {
     getAllPostsWithAdviser,
     addLike,
     removeLike,
-    getAllPostsOfAdviser,createPost
+    getAllPostsOfAdviser,
+    createPost
 
 }
