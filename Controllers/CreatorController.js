@@ -4,8 +4,19 @@ import { v1 as uuidv1 } from 'uuid';
 import multer from 'multer';
 import { ref as sRef, uploadBytesResumable } from 'firebase/storage';
 import { getDownloadURL, getStorage, uploadBytes } from 'firebase/storage'
+import otpGenerator from 'otp-generator'
+import nodemailer from 'nodemailer';
 
 const storage = getStorage()
+
+const generateOTP = () => {
+    return otpGenerator.generate(6, {
+        digits: true,
+        upperCaseAlphabets: false,
+        lowerCaseAlphabets: false,
+        specialChars: false
+    });
+};
 
 const hashPassword = async (password) => {
     try {
@@ -36,6 +47,38 @@ const isUserExist = async (email) => {
     return userFound;
 };
 
+const getUserId = async (email) => {
+    let userid = null
+    try {
+        const snapshot = await database.ref('advisers').once('value');
+        if (snapshot.exists()) {
+            snapshot.forEach((childSnapshot) => {
+                const userData = childSnapshot.val();
+                if (userData.email === email) {
+                    userid = childSnapshot.key;
+                }
+            });
+        }
+    } catch (error) {
+        throw new Error('Error checking user existence');
+    }
+    return userid;
+};
+
+async function getuserData(userid) {
+    try {
+      const snapshot = await database.ref(`advisers/${userid}`).once('value');
+      if (snapshot.exists()) {
+        return  snapshot.val();
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching adviser details:', error);
+      return null;
+    }
+  }
+
 const signUp = async (req, res) => {
     const { email, password } = req.body;
     const userid = uuidv1();
@@ -48,14 +91,14 @@ const signUp = async (req, res) => {
 
         const hashedPassword = await hashPassword(password);
         const userExists = await isUserExist(email);
-    
+
         if (userExists) {
-          return res.status(400).json({ error: 'User already exists with this email' });
+            return res.status(400).json({ error: 'User already exists with this email' });
         }
 
         const userData = {
             email: email,
-            password:hashedPassword,
+            password: hashedPassword,
         };
 
         await database.ref('advisers/' + userid).set(userData);
@@ -67,42 +110,42 @@ const signUp = async (req, res) => {
 }
 
 
-const login = async (req, res)=>{
+const login = async (req, res) => {
     const { email, password } = req.body;
     try {
-      const snapshot = await database.ref('advisers').once('value');
-      if (snapshot.exists()) {
-        let userFound = false;
-  
-        snapshot.forEach((childSnapshot) => {
-          const userData = childSnapshot.val();
-          if (userData.email === email) {
-            userFound = true;
-            bcrypt.compare(password, userData.password, (err, isMatch) => {
-              if (err) {
-                return res.status(500).json({ error: 'Error comparing passwords' });
-              }
-              if (isMatch) {
-                const userid = childSnapshot.key;
-                // Store adviserId in the session or send it in the response
-                res.status(200).json({ message: 'Login successful', userid });
-              } else {
-                res.status(401).json({ error: 'Invalid email or password' });
-              }
+        const snapshot = await database.ref('advisers').once('value');
+        if (snapshot.exists()) {
+            let userFound = false;
+
+            snapshot.forEach((childSnapshot) => {
+                const userData = childSnapshot.val();
+                if (userData.email === email) {
+                    userFound = true;
+                    bcrypt.compare(password, userData.password, (err, isMatch) => {
+                        if (err) {
+                            return res.status(500).json({ error: 'Error comparing passwords' });
+                        }
+                        if (isMatch) {
+                            const userid = childSnapshot.key;
+                            // Store adviserId in the session or send it in the response
+                            res.status(200).json({ message: 'Login successful', userid });
+                        } else {
+                            res.status(401).json({ error: 'Invalid email or password' });
+                        }
+                    });
+                    return true; // Exit the forEach loop once the user is found
+                }
             });
-            return true; // Exit the forEach loop once the user is found
-          }
-        });
-  
-        if (!userFound) {
-          res.status(404).json({ error: 'User not found' });
+
+            if (!userFound) {
+                res.status(404).json({ error: 'User not found' });
+            }
+        } else {
+            res.status(404).json({ error: 'No data available' });
         }
-      } else {
-        res.status(404).json({ error: 'No data available' });
-      }
     } catch (error) {
-      console.error('Error during login:', error);
-      res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+        console.error('Error during login:', error);
+        res.status(500).json({ error: 'Something went wrong. Please try again later.' });
     }
 }
 
@@ -162,41 +205,130 @@ const saveDetails = async (req, res) => {
 
 const getUserDetails = async (req, res) => {
     const userid = req.params.userid;
-  
-    try {
-      const snapshot = await database.ref(`advisers/${userid}`).once('value');
-      if (snapshot.exists()) {
-        res.status(200).json(snapshot.val());
-      } else {
-        res.status(404).json({ message: 'No data available' });
-      }
-    } catch (error) {
-      console.error('Error fetching adviser details:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  };
 
-  const getUserByUsername = async (req, res) => {
-    const key = req.params.key || '';
-  
     try {
-      const snapshot = await database.ref('advisers').once('value');
-      const advisers = snapshot.val();
-      
-      if (!advisers) {
-        return res.status(404).json({ message: 'No data available' });
-      }
-  
-      // Filter users based on the key, or return the full list if the key is empty
-      const filteredAdvisers = Object.values(advisers)
-        .filter(adviser => key ? adviser.username.toLowerCase().includes(key.toLowerCase()) : true);
-  
-      res.status(200).json(filteredAdvisers);
+        const snapshot = await database.ref(`advisers/${userid}`).once('value');
+        if (snapshot.exists()) {
+            res.status(200).json(snapshot.val());
+        } else {
+            res.status(404).json({ message: 'No data available' });
+        }
     } catch (error) {
-      console.error('Error fetching advisers:', error);
-      res.status(500).json({ error: 'Internal server error' });
+        console.error('Error fetching adviser details:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
-  };
+};
+
+const getUserByUsername = async (req, res) => {
+    const key = req.params.key || '';
+
+    try {
+        const snapshot = await database.ref('advisers').once('value');
+        const advisers = snapshot.val();
+
+        if (!advisers) {
+            return res.status(404).json({ message: 'No data available' });
+        }
+
+        // Filter users based on the key, or return the full list if the key is empty
+        const filteredAdvisers = Object.values(advisers)
+            .filter(adviser => key ? adviser.username.toLowerCase().includes(key.toLowerCase()) : true);
+
+        res.status(200).json(filteredAdvisers);
+    } catch (error) {
+        console.error('Error fetching advisers:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+
+const sendResetPasswordOtp = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required!!' });
+    }
+
+    try {
+        const userid = await getUserId(email);
+
+        if (!userid) {
+            return res.status(400).json({ error: 'User does not exist with this email' });
+        }
+
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            port: 465,
+            secure: true, // Use `true` for port 465, `false` for all other ports
+            auth: {
+                user: "adviserxiis@gmail.com",
+                pass: "ziwo lsoq xeaj vran",
+            },
+        });
+
+
+        async function main() {
+            const otp = generateOTP();
+            await database.ref('advisers/' + userid).update({ change_password_otp: otp });
+            const info = await transporter.sendMail({
+                from: 'adviserxiis@gmail.com', // sender address
+                to: email, // list of receivers
+                subject: "OTP from Luink.ai", // Subject line
+                text: `Your one time password for change passsword is ${otp}. Thank you for joining with Adviserxiis.`, // plain text body
+                //   html: "<b>Hello world?</b>",  html body
+            });
+            res.status(200).json({message:"OTP send successfully", userid:userid})
+        }
+        main();
+    } catch (error) {
+        console.error('Error during sending otp', error);
+        res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+    }
+}
+
+
+const verifyResetPasswordOtp = async (req, res) =>{
+    const { userid, otp} = req.body
+
+    if (!userid || !otp) {
+        return res.status(400).json({ error: 'All fields are required!!' });
+    }
+
+    try {
+
+        const userData = await getuserData(userid)
+        if(otp == userData.change_password_otp)
+        {
+            res.status(200).json({message:"OTP verify Successfully", userid:userid})
+        }
+        else{
+        res.status(400).json({message:"Wrong OTP"})
+        }
+ 
+    } catch (error) {
+        console.error('Error during verify otp', error);
+        res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+    }
+}
+
+
+const resetPassword = async (req, res) =>{
+       const { userid, password} = req.body
+
+    if (!userid || !password) {
+        return res.status(400).json({ error: 'All fields are required!!' });
+    }
+
+    try {
+        const hashedPassword = await hashPassword(password);
+        await database.ref('advisers/' + userid).update({ password:hashedPassword });
+
+        res.status(200).json({message:"Password Changed Successfully", userid:userid})
+    } catch (error) {
+        console.error('Error during Reset Password', error);
+        res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+    }
+}
 
 
 export {
@@ -204,5 +336,8 @@ export {
     login,
     saveDetails,
     getUserDetails,
-    getUserByUsername
+    getUserByUsername,
+    sendResetPasswordOtp,
+    verifyResetPasswordOtp,
+    resetPassword,
 }
