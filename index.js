@@ -11,6 +11,7 @@ import adviserRoutes from './Routes/AdviserRoutes.js'
 import userRoutes from './Routes/UserRoutes.js'
 import postRoutes from './Routes/PostRoutes.js'
 import testRoutes from './Routes/TestRoutes.js'
+import creatorRoutes from './Routes/CreatorRoutes.js'
 
 const PORT = process.env.PORT || 8000
 
@@ -88,6 +89,8 @@ app.use('/adviser', adviserRoutes)
 app.use('/user',userRoutes)
 
 app.use('/post',postRoutes)
+
+app.use('/creator',creatorRoutes)
 
 app.use('/test',testRoutes)
 
