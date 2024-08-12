@@ -184,7 +184,7 @@ const getAllPostsOfAdviser = async (req, res) => {
 };
 
 const createPost = async (req, res) => {
-  const { adviserid, description } = req.body;
+  const { adviserid, description, location } = req.body;
   const file = req.file;
 
   if (!adviserid || !file) {
@@ -216,6 +216,11 @@ const createPost = async (req, res) => {
       {
         postData.description = description
       }
+
+      if(location)
+        {
+          postData.location = location
+        }
       
       await database.ref('advisers_posts/' + postid).set(postData);
 
