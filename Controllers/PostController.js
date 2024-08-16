@@ -234,7 +234,7 @@ const createPost = async (req, res) => {
 
 
 
-      res.status(200).json({ message: 'Video uploaded and data saved successfully', videoURL: downloadURL, updatedPosts, postData });
+      res.status(200).json({ message: 'Video uploaded and data saved successfully' });
   } catch (error) {
       console.error('Error during video upload:', error);
       res.status(500).json({ error: 'Something went wrong. Please try again later.' });
