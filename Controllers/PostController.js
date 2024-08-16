@@ -184,28 +184,27 @@ const getAllPostsOfAdviser = async (req, res) => {
 };
 
 const createPost = async (req, res) => {
-  const { adviserid, description, location } = req.body;
-  const file = req.file;
+  const { adviserid, description, location, videoURL,fileType } = req.body;
 
-  if (!adviserid || !file) {
+  if (!adviserid || !videoURL || !fileType) {
       return res.status(400).json({ error: 'Adviser ID and video file are required' });
   }
 
   try {
       const postid = uuidv1();
-      const fileRef = sRef(storage, `posts/${postid}`);
-      const metadata = {
-          contentType: file.mimetype,
-      };
+      // const fileRef = sRef(storage, `posts/${postid}`);
+      // const metadata = {
+      //     contentType: file.mimetype,
+      // };
 
-      const snapshot = await uploadBytes(fileRef, file.buffer, metadata);
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      // const snapshot = await uploadBytes(fileRef, file.buffer, metadata);
+      // const downloadURL = await getDownloadURL(snapshot.ref);
 
-      const fileType = file.mimetype.startsWith('video/') ? 'video' : 'image';
+      // const fileType = file.mimetype.startsWith('video/') ? 'video' : 'image';
 
       const postData = {
           adviserid: adviserid,
-          post_file: downloadURL,
+          post_file: videoURL,
           file_type: fileType,
           dop: new Date().toString(),
           views: 0,
