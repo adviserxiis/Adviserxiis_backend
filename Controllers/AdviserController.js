@@ -204,8 +204,6 @@ const saveBankDetails = async (req, res) => {
   const { adviserid } = req.body;
   const files = req.files;
 
-  console.log("req", req.body)
-  console.log("filess", req.files)
 
   if (!adviserid || !files) {
     return res.status(400).json({ error: 'Adviser ID and files are required' });

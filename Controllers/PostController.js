@@ -241,11 +241,31 @@ const createPost = async (req, res) => {
   }
 };
 
+const sharePost = async (req, res) =>{
+  const { postid } = req.body
+
+  if (!postid) {
+    return res.status(400).json({ error: 'Postid is required!!' });
+}
+
+  try {
+      
+    const sharelink = `https://www.adviserxiis.com/post/${postid}`
+       
+    res.status(200).json({ sharelink:sharelink });
+    
+  } catch (error) {
+     console.log("error", error)
+     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+  }
+}
+
 export {
     getAllPostsWithAdviser,
     addLike,
     removeLike,
     getAllPostsOfAdviser,
-    createPost
+    createPost,
+    sharePost
 
 }
