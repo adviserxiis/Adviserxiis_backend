@@ -66,6 +66,7 @@ const getUserId = async (email) => {
 };
 
 async function getuserData(userid) {
+
     try {
       const snapshot = await database.ref(`advisers/${userid}`).once('value');
       if (snapshot.exists()) {
@@ -331,6 +332,83 @@ const resetPassword = async (req, res) =>{
 }
 
 
+const followCreator = async (req, res) =>{
+    const { adviserid, followerid } = req.body;
+
+    if (!adviserid || !followerid) {
+      return res.status(400).json({ message: 'adviserId and followerId are required.' });
+    }
+  
+    try {
+      const adviser = await getuserData(adviserid);
+      const follower = await getuserData(followerid);
+  
+      if (!adviser || !follower) {
+        return res.status(404).json({ message: 'Adviser or Follower not found.' });
+      }
+  
+      const currentFollowers = adviser.followers || [];
+      const currentFollowings = follower.followings || [];
+  
+      if (!currentFollowers.includes(followerid)) {
+        currentFollowers.push(followerid);
+      }
+  
+      if (!currentFollowings.includes(adviserid)) {
+        currentFollowings.push(adviserid);
+      }
+  
+      const updates = {};
+      updates[`advisers/${adviserid}/followers`] = currentFollowers;
+      updates[`advisers/${followerid}/followings`] = currentFollowings;
+  
+      await database.ref().update(updates);
+  
+      return res.status(200).json({ message: 'Followed successfully.' });
+    } catch (error) {
+      console.error('Error following adviser:', error);
+      return res.status(500).json({ message: 'Internal server error.' });
+    }
+} 
+
+
+const unfollowCreator = async (req, res) => {
+    const { adviserid, followerid } = req.body;
+  
+    if (!adviserid || !followerid) {
+      return res.status(400).json({ message: 'adviserId and followerId are required.' });
+    }
+  
+    try {
+      const adviser = await getuserData(adviserid);
+      const follower = await getuserData(followerid);
+  
+      if (!adviser || !follower) {
+        return res.status(404).json({ message: 'Adviser or Follower not found.' });
+      }
+  
+      let currentFollowers = adviser.followers || [];
+      let currentFollowings = follower.followings || [];
+  
+      currentFollowers = currentFollowers.filter(id => id !== followerid);
+  
+      currentFollowings = currentFollowings.filter(id => id !== adviserid);
+  
+      const updates = {};
+      updates[`advisers/${adviserid}/followers`] = currentFollowers;
+      updates[`advisers/${followerid}/followings`] = currentFollowings;
+  
+      await database.ref().update(updates);
+  
+      return res.status(200).json({ message: 'Unfollowed successfully.' });
+    } catch (error) {
+      console.error('Error unfollowing adviser:', error);
+      return res.status(500).json({ message: 'Internal server error.' });
+    }
+  }
+  
+
+
 export {
     signUp,
     login,
@@ -340,4 +418,6 @@ export {
     sendResetPasswordOtp,
     verifyResetPasswordOtp,
     resetPassword,
+    followCreator,
+    unfollowCreator
 }
