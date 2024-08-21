@@ -210,7 +210,7 @@ const saveDetails = async (req, res) => {
 
     // Validate mandatory fields
     if (!userid || !jsonData.name || !jsonData.professional_title || !jsonData.discription || !jsonData.interests) {
-        return res.status(400).json({ error: 'Name, Professional Title, Description, and Interests are required!' });
+        return res.status(400).json({ error: 'userid, Name, Professional Title, Description,  are required!' });
     }
 
     const fileKeys = ['profile_photo', 'profile_background'];
@@ -263,7 +263,7 @@ const saveDetails = async (req, res) => {
         res.status(200).json({ message: 'Data Saved Successfully!!' });
     } catch (error) {
         console.error('Error during file upload:', error);
-        res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+        res.status(500).json({ error: error });
     }
 };
 
