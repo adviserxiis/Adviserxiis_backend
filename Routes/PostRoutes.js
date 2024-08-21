@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addLike, createPost, getAllPostsOfAdviser, getAllPostsWithAdviser, removeLike, sharePost } from "../Controllers/PostController.js";
+import { addLike, addViews, createPost, getAllPostsOfAdviser, getAllPostsWithAdviser, removeLike, sharePost } from "../Controllers/PostController.js";
 import multer from 'multer';
 
 
@@ -13,6 +13,7 @@ router.route('/removelike').post(removeLike)
 router.route('/getpostsofadviser/:adviserid').get(getAllPostsOfAdviser)
 router.route('/createpost').post(createPost)
 router.route('/sharepost').post(sharePost)
+router.route('/addviews').post(addViews)
 
 
 export default router;

@@ -207,7 +207,7 @@ const createPost = async (req, res) => {
           post_file: videoURL,
           file_type: fileType,
           dop: new Date().toString(),
-          views: 0,
+          views: [],
           likes: [],
       };
 
@@ -260,12 +260,52 @@ const sharePost = async (req, res) =>{
   }
 }
 
+const addViews = async (req, res) =>{
+  const { userid, postid } = req.body;
+
+  if (!userid) {
+    return res.status(401).json({ error: 'You must be logged in to like the post!' });
+  }
+
+  try {
+    const postData = await getPost(postid);
+    if (!postData) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    let currentViews = postData.views;
+
+    // Check if views is an integer
+    if (typeof currentViews === 'number') {
+      // Treat it as an empty array if it's an integer
+      currentViews = [];
+    }
+  
+    // If it's not an integer and not an array, initialize it as an empty array
+    if (!Array.isArray(currentViews)) {
+      currentViews = [];
+    }
+
+    if (currentViews.includes(userid)) {
+      return res.status(200).json({ message:'views count updated successfully!!' });
+    }
+
+    const updatedViews = [...currentViews, userid];
+    await database.ref(`advisers_posts/${postid}`).update({ views: updatedViews });
+
+    return res.status(200).json({ message: 'views count updated successfully!!' });
+  } catch (error) {
+    console.error('Error updating views:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 export {
     getAllPostsWithAdviser,
     addLike,
     removeLike,
     getAllPostsOfAdviser,
     createPost,
-    sharePost
+    sharePost,
+    addViews
 
 }
