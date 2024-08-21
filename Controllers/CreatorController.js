@@ -263,7 +263,7 @@ const saveDetails = async (req, res) => {
         res.status(200).json({ message: 'Data Saved Successfully!!' });
     } catch (error) {
         console.error('Error during file upload:', error);
-        res.status(500).json({ error: error });
+        res.status(500).json({ error: 'Something went wrong, Please try again.' });
     }
 };
 
