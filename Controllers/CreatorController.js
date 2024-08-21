@@ -406,6 +406,36 @@ const unfollowCreator = async (req, res) => {
       return res.status(500).json({ message: 'Internal server error.' });
     }
   }
+
+
+const signinwithGoogle = async (req, res) =>{
+
+    const { email } = req.body;
+
+    if (!email ) {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+
+    try {
+        const userExists = await isUserExist(email);
+        if (userExists) {
+            const userid = await getUserId(email);
+            return res.status(200).json({ message: 'Login Successfully!!', userid });
+        }
+
+        else{
+            const userid = uuidv1();
+            const userData = {
+                email: email,
+            };
+            await database.ref('advisers/' + userid).set(userData);
+            res.status(200).json({ message: 'Login Successfully!!', userid });
+        }
+    } catch (error) {
+        console.error('Error during signin with google:', error);
+        res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+    }
+}
   
 
 
@@ -419,5 +449,6 @@ export {
     verifyResetPasswordOtp,
     resetPassword,
     followCreator,
-    unfollowCreator
+    unfollowCreator,
+    signinwithGoogle
 }

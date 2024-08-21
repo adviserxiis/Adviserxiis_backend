@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from 'multer';
-import { followCreator, getUserByUsername, getUserDetails, login, resetPassword, saveDetails, sendResetPasswordOtp, signUp, unfollowCreator, verifyResetPasswordOtp } from "../Controllers/CreatorController.js";
+import { followCreator, getUserByUsername, getUserDetails, login, resetPassword, saveDetails, sendResetPasswordOtp, signinwithGoogle, signUp, unfollowCreator, verifyResetPasswordOtp } from "../Controllers/CreatorController.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -22,6 +22,7 @@ router.route('/verifychangepasswordotp').post(verifyResetPasswordOtp)
 router.route('/resetpassword').post(resetPassword)
 router.route('/followcreator').post(followCreator)
 router.route('/unfollowcreator').post(unfollowCreator)
+router.route('/signinwithgoogle').post(signinwithGoogle)
 
 
 
