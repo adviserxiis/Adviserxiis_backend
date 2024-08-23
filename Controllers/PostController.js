@@ -4,6 +4,11 @@ import { v1 as uuidv1 } from 'uuid';
 import multer from 'multer';
 import { ref as sRef, uploadBytesResumable } from 'firebase/storage';
 import { getDownloadURL, getStorage, uploadBytes } from 'firebase/storage'
+import axios from 'axios';
+
+
+const BUNNY_STORAGE_URL = 'https://storage.bunnycdn.com/';
+const ACCESS_KEY = '3c4426df-f78d-46c8-a5db2e682cc6-7714-4bc64dfb';
 
 
 const storage = getStorage()
@@ -183,64 +188,110 @@ const getAllPostsOfAdviser = async (req, res) => {
   }
 };
 
-const createPost = async (req, res) => {
-  const { adviserid, description, location, videoURL,fileType } = req.body;
+// const createPost = async (req, res) => {
+//   const { adviserid, description, location, videoURL,fileType } = req.body;
 
-  if (!adviserid || !videoURL || !fileType) {
-      return res.status(400).json({ error: 'Adviser ID and video file are required' });
-  }
+//   if (!adviserid || !videoURL || !fileType) {
+//       return res.status(400).json({ error: 'Adviser ID and video file are required' });
+//   }
 
-  try {
-      const postid = uuidv1();
-      // const fileRef = sRef(storage, `posts/${postid}`);
-      // const metadata = {
-      //     contentType: file.mimetype,
-      // };
+//   try {
+//       const postid = uuidv1();
+//       // const fileRef = sRef(storage, `posts/${postid}`);
+//       // const metadata = {
+//       //     contentType: file.mimetype,
+//       // };
 
-      // const snapshot = await uploadBytes(fileRef, file.buffer, metadata);
-      // const downloadURL = await getDownloadURL(snapshot.ref);
+//       // const snapshot = await uploadBytes(fileRef, file.buffer, metadata);
+//       // const downloadURL = await getDownloadURL(snapshot.ref);
 
-      // const fileType = file.mimetype.startsWith('video/') ? 'video' : 'image';
+//       // const fileType = file.mimetype.startsWith('video/') ? 'video' : 'image';
 
-      const postData = {
-          adviserid: adviserid,
-          post_file: videoURL,
-          file_type: fileType,
-          dop: new Date().toString(),
-          views: [],
-          likes: [],
-      };
+//       const postData = {
+//           adviserid: adviserid,
+//           post_file: videoURL,
+//           file_type: fileType,
+//           dop: new Date().toString(),
+//           views: [],
+//           likes: [],
+//       };
 
-      if(description)
-      {
-        postData.description = description
-      }
+//       if(description)
+//       {
+//         postData.description = description
+//       }
 
-      if(location)
-        {
-          postData.location = location
-        }
+//       if(location)
+//         {
+//           postData.location = location
+//         }
       
-      await database.ref('advisers_posts/' + postid).set(postData);
+//       await database.ref('advisers_posts/' + postid).set(postData);
 
-      const adviserData = await getAdviser(adviserid)
-      const currentPosts = adviserData.data.posts || []; // Retrieve existing IDs or initialize to an empty array
+//       const adviserData = await getAdviser(adviserid)
+//       const currentPosts = adviserData.data.posts || []; // Retrieve existing IDs or initialize to an empty array
 
-      // Add the new ID to the array
-      const updatedPosts = [...currentPosts, postid];
+//       // Add the new ID to the array
+//       const updatedPosts = [...currentPosts, postid];
 
-      // Update the array field in the database
-      await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
+//       // Update the array field in the database
+//       await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
 
 
 
-      res.status(200).json({ message: 'Video uploaded and data saved successfully' });
-  } catch (error) {
-      console.error('Error during video upload:', error);
-      res.status(500).json({ error: 'Something went wrong. Please try again later.' });
-  }
-};
+//       res.status(200).json({ message: 'Video uploaded and data saved successfully' });
+//   } catch (error) {
+//       console.error('Error during video upload:', error);
+//       res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+//   }
+// };
 
+
+const createPost = async (req, res) =>{
+  try {
+    // Get video file and other form data
+    const file = req.file;
+    const { description, location } = req.body;
+
+    if (!file) {
+        return res.status(400).json({ message: 'No file uploaded.' });
+    }
+
+    // Define the file name
+    const fileName = `${Date.now()}_${file.originalname}`;
+
+    // Upload video to Bunny.net
+    const response = await axios.put(
+        `${BUNNY_STORAGE_URL}${fileName}`,
+        file.buffer,
+        {
+            headers: {
+                'AccessKey': ACCESS_KEY,
+                'Content-Type': file.mimetype
+            }
+        }
+    );
+
+    if (response.status !== 201) {
+        return res.status(response.status).json({ message: 'Failed to upload video to Bunny.net.' });
+    }
+
+    // Save video information to Firebase Realtime Database
+    // const videoRef = db.ref('videos').push();
+    // await videoRef.set({
+    //     videoUrl: `${BUNNY_STORAGE_URL}${fileName}`,
+    //     description,
+    //     location,
+    //     createdAt: new Date().toISOString()
+    // });
+
+    return res.status(201).json({ message: 'Video uploaded successfully.', videoUrl: `${BUNNY_STORAGE_URL}${fileName}` });
+
+} catch (error) {
+    console.error('Error uploading video:', error.message);
+    return res.status(500).json({ message: 'Internal server error.' });
+}
+}
 const sharePost = async (req, res) =>{
   const { postid } = req.body
 

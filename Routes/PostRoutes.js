@@ -11,7 +11,8 @@ router.route('/getallpostswithadviserdetails').get(getAllPostsWithAdviser)
 router.route('/addlike').post(addLike)
 router.route('/removelike').post(removeLike)
 router.route('/getpostsofadviser/:adviserid').get(getAllPostsOfAdviser)
-router.route('/createpost').post(createPost)
+// router.route('/createpost').post(createPost)
+router.post('/createpost', upload.single('video'), createPost);
 router.route('/sharepost').post(sharePost)
 router.route('/addviews').post(addViews)
 
