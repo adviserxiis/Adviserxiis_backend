@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import { sendMail } from './Controllers/SendMail.js';
 import { sendConfirmationMail } from './Controllers/SendConfirmationMail.js';
+import timeout from 'connect-timeout'; 
 import Razorpay from 'razorpay';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
@@ -20,6 +21,7 @@ const app = express()
 
 app.use(cors());
 app.use(express.json());
+app.use(timeout('300s'));
 // app.use(express.urlencoded({extended: false}));
 // app.use(bodyParser.json());
 app.use(bodyParser.json({ limit: '50mb' }));
