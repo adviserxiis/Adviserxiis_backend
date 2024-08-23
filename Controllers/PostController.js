@@ -184,106 +184,61 @@ const getAllPostsOfAdviser = async (req, res) => {
 };
 
 const createPost = async (req, res) => {
-  // const { adviserid, description, location, videoURL,fileType } = req.body;
+  const { adviserid, description, location, videoURL,fileType } = req.body;
 
-  // if (!adviserid || !videoURL || !fileType) {
-  //     return res.status(400).json({ error: 'Adviser ID and video file are required' });
-  // }
+  if (!adviserid || !videoURL || !fileType) {
+      return res.status(400).json({ error: 'Adviser ID and video file are required' });
+  }
 
-  // try {
-  //     const postid = uuidv1();
-  //     // const fileRef = sRef(storage, `posts/${postid}`);
-  //     // const metadata = {
-  //     //     contentType: file.mimetype,
-  //     // };
+  try {
+      const postid = uuidv1();
+      // const fileRef = sRef(storage, `posts/${postid}`);
+      // const metadata = {
+      //     contentType: file.mimetype,
+      // };
 
-  //     // const snapshot = await uploadBytes(fileRef, file.buffer, metadata);
-  //     // const downloadURL = await getDownloadURL(snapshot.ref);
+      // const snapshot = await uploadBytes(fileRef, file.buffer, metadata);
+      // const downloadURL = await getDownloadURL(snapshot.ref);
 
-  //     // const fileType = file.mimetype.startsWith('video/') ? 'video' : 'image';
+      // const fileType = file.mimetype.startsWith('video/') ? 'video' : 'image';
 
-  //     const postData = {
-  //         adviserid: adviserid,
-  //         post_file: videoURL,
-  //         file_type: fileType,
-  //         dop: new Date().toString(),
-  //         views: [],
-  //         likes: [],
-  //     };
+      const postData = {
+          adviserid: adviserid,
+          post_file: videoURL,
+          file_type: fileType,
+          dop: new Date().toString(),
+          views: [],
+          likes: [],
+      };
 
-  //     if(description)
-  //     {
-  //       postData.description = description
-  //     }
+      if(description)
+      {
+        postData.description = description
+      }
 
-  //     if(location)
-  //       {
-  //         postData.location = location
-  //       }
+      if(location)
+        {
+          postData.location = location
+        }
       
-  //     await database.ref('advisers_posts/' + postid).set(postData);
+      await database.ref('advisers_posts/' + postid).set(postData);
 
-  //     const adviserData = await getAdviser(adviserid)
-  //     const currentPosts = adviserData.data.posts || []; // Retrieve existing IDs or initialize to an empty array
+      const adviserData = await getAdviser(adviserid)
+      const currentPosts = adviserData.data.posts || []; // Retrieve existing IDs or initialize to an empty array
 
-  //     // Add the new ID to the array
-  //     const updatedPosts = [...currentPosts, postid];
+      // Add the new ID to the array
+      const updatedPosts = [...currentPosts, postid];
 
-  //     // Update the array field in the database
-  //     await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
-
-
-
-  //     res.status(200).json({ message: 'Video uploaded and data saved successfully' });
-  // } catch (error) {
-  //     console.error('Error during video upload:', error);
-  //     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
-  // }
+      // Update the array field in the database
+      await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
 
 
-  const { adviserid, description, location, videoURL, fileType } = req.body;
 
-if (!adviserid || !videoURL || !fileType) {
-    return res.status(400).json({ error: 'Adviser ID and video file are required' });
-}
-
-try {
-    const postid = uuidv1();
-    const dop = new Date().toString();
-
-    const postData = {
-        adviserid,
-        post_file: videoURL,
-        file_type: fileType,
-        dop,
-        views: [],
-        likes: [],
-    };
-
-    if (description) {
-        postData.description = description;
-    }
-
-    if (location) {
-        postData.location = location;
-    }
-
-    // Use Promise.all to execute both database operations in parallel
-    const savePostData = database.ref('advisers_posts/' + postid).set(postData);
-
-    const updateAdviserPosts = getAdviser(adviserid).then(adviserData => {
-        const currentPosts = adviserData.data.posts || []; // Retrieve existing IDs or initialize to an empty array
-        const updatedPosts = [...currentPosts, postid];
-        return database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
-    });
-
-    await Promise.all([savePostData, updateAdviserPosts]);
-
-    res.status(200).json({ message: 'Video uploaded and data saved successfully' });
-} catch (error) {
-    console.error('Error during video upload:', error);
-    res.status(500).json({ error: 'Something went wrong. Please try again later.' });
-}
+      res.status(200).json({ message: 'Video uploaded and data saved successfully' });
+  } catch (error) {
+      console.error('Error during video upload:', error);
+      res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+  }
 };
 
 const sharePost = async (req, res) =>{
