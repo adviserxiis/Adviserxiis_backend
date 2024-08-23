@@ -151,96 +151,38 @@ const login = async (req, res) => {
 }
 
 
-// const saveDetails = async (req, res) => {
-//     const files = req.files;
-//     const { userid } = req.body
-//     const jsonData = JSON.parse(req.body.data);
-
-//     if (!files || !userid || !jsonData.name || !jsonData.professional_title || !jsonData.discription || !jsonData.interests || !jsonData.social_links) {
-//         return res.status(400).json({ error: 'All Fields are required!!' });
-//     }
-
-//     const fileKeys = ['profile_photo', 'profile_background'];
-//     const uploadPromises = [];
-
-//     async function uploadFiles() {
-//         for (const key of fileKeys) {
-//             if (files[key]) {
-//                 const file = files[key][0];
-//                 const storageRef = sRef(storage, `images/${uuidv1()}`);
-//                 const metadata = {
-//                     contentType: file.mimetype,
-//                 };
-//                 const snapshot = await uploadBytesResumable(storageRef, file.buffer, metadata);
-//                 const downloadURL = await getDownloadURL(snapshot.ref);
-
-//                 uploadPromises.push(Promise.resolve(downloadURL));
-//             }
-//         }
-//         const downloadURLs = await Promise.all(uploadPromises);
-//         return downloadURLs;
-//     }
-
-//     try {
-//         const urls = await uploadFiles();
-//         const userData = {
-//             username: jsonData.name,
-//             interests: jsonData.interests,
-//             social_links: jsonData.social_links,
-//             professional_title: jsonData.professional_title,
-//             professional_bio: jsonData.discription,
-//         };
-
-
-//         fileKeys.forEach((key, index) => {
-//             if (files[key]) {
-//                 userData[key] = urls[index];
-//             }
-//         });
-//         await database.ref('advisers/' + userid).update(userData);
-//         res.status(200).json({ message: 'Data Saved Successfully!!' });
-//     } catch (error) {
-//         console.error('Error during file upload:', error);
-//         res.status(500).json({ error: 'Something went wrong. Please try again later.' });
-//     }
-// }
-
 const saveDetails = async (req, res) => {
-    try {
-        const files = req.files;
-        const { userid } = req.body;
-        const jsonData = JSON.parse(req.body.data);
+    const files = req.files;
+    const { userid } = req.body
+    const jsonData = JSON.parse(req.body.data);
 
-        // Validate mandatory fields
-        if (!userid || !jsonData.name || !jsonData.professional_title || !jsonData.discription || !jsonData.interests) {
-            return res.status(400).json({ error: 'userid, Name, Professional Title, Description, and Interests are required!' });
-        }
+    if ( !userid || !jsonData.name || !jsonData.professional_title || !jsonData.discription || !jsonData.interests ) {
+        return res.status(400).json({ error: 'All Fields are required!!' });
+    }
 
-        const fileKeys = ['profile_photo', 'profile_background'];
-        const uploadPromises = [];
+    const fileKeys = ['profile_photo', 'profile_background'];
+    const uploadPromises = [];
 
-        // Optimize file uploads by parallelizing them
-        fileKeys.forEach(key => {
+    async function uploadFiles() {
+        for (const key of fileKeys) {
             if (files[key]) {
                 const file = files[key][0];
                 const storageRef = sRef(storage, `images/${uuidv1()}`);
-                const metadata = { contentType: file.mimetype };
+                const metadata = {
+                    contentType: file.mimetype,
+                };
+                const snapshot = await uploadBytesResumable(storageRef, file.buffer, metadata);
+                const downloadURL = await getDownloadURL(snapshot.ref);
 
-                const uploadPromise = uploadBytesResumable(storageRef, file.buffer, metadata)
-                    .then(snapshot => getDownloadURL(snapshot.ref))
-                    .catch(error => {
-                        console.error(`Error uploading ${key}:`, error);
-                        throw new Error(`Failed to upload ${key}`);
-                    });
-
-                uploadPromises.push(uploadPromise);
+                uploadPromises.push(Promise.resolve(downloadURL));
             }
-        });
-
-        // Wait for all uploads to complete
+        }
         const downloadURLs = await Promise.all(uploadPromises);
+        return downloadURLs;
+    }
 
-        // Construct user data object with mandatory fields
+    try {
+        const urls = await uploadFiles();
         const userData = {
             username: jsonData.name,
             interests: jsonData.interests,
@@ -248,28 +190,88 @@ const saveDetails = async (req, res) => {
             professional_bio: jsonData.discription,
         };
 
-        // Add social links if they exist
-        if (jsonData.social_links) {
+                if (jsonData.social_links) {
             userData.social_links = jsonData.social_links;
         }
 
-        // Assign URLs to userData if files were uploaded
         fileKeys.forEach((key, index) => {
             if (files[key]) {
-                userData[key] = downloadURLs[index];
+                userData[key] = urls[index];
             }
         });
-
-        // Update the database with user data
         await database.ref('advisers/' + userid).update(userData);
-
-        // Send response after all operations are complete
         res.status(200).json({ message: 'Data Saved Successfully!!' });
     } catch (error) {
-        console.error('Error during saveDetails operation:', error);
-        res.status(500).json({ error: 'Something went wrong, Please try again.' });
+        console.error('Error during file upload:', error);
+        res.status(500).json({ error: 'Something went wrong. Please try again later.' });
     }
-};
+}
+
+// const saveDetails = async (req, res) => {
+//     try {
+//         const files = req.files;
+//         const { userid } = req.body;
+//         const jsonData = JSON.parse(req.body.data);
+
+//         // Validate mandatory fields
+//         if (!userid || !jsonData.name || !jsonData.professional_title || !jsonData.discription || !jsonData.interests) {
+//             return res.status(400).json({ error: 'userid, Name, Professional Title, Description, and Interests are required!' });
+//         }
+
+//         const fileKeys = ['profile_photo', 'profile_background'];
+//         const uploadPromises = [];
+
+//         // Optimize file uploads by parallelizing them
+//         fileKeys.forEach(key => {
+//             if (files[key]) {
+//                 const file = files[key][0];
+//                 const storageRef = sRef(storage, `images/${uuidv1()}`);
+//                 const metadata = { contentType: file.mimetype };
+
+//                 const uploadPromise = uploadBytesResumable(storageRef, file.buffer, metadata)
+//                     .then(snapshot => getDownloadURL(snapshot.ref))
+//                     .catch(error => {
+//                         console.error(`Error uploading ${key}:`, error);
+//                         throw new Error(`Failed to upload ${key}`);
+//                     });
+
+//                 uploadPromises.push(uploadPromise);
+//             }
+//         });
+
+//         // Wait for all uploads to complete
+//         const downloadURLs = await Promise.all(uploadPromises);
+
+//         // Construct user data object with mandatory fields
+//         const userData = {
+//             username: jsonData.name,
+//             interests: jsonData.interests,
+//             professional_title: jsonData.professional_title,
+//             professional_bio: jsonData.discription,
+//         };
+
+//         // Add social links if they exist
+//         if (jsonData.social_links) {
+//             userData.social_links = jsonData.social_links;
+//         }
+
+//         // Assign URLs to userData if files were uploaded
+//         fileKeys.forEach((key, index) => {
+//             if (files[key]) {
+//                 userData[key] = downloadURLs[index];
+//             }
+//         });
+
+//         // Update the database with user data
+//         await database.ref('advisers/' + userid).update(userData);
+
+//         // Send response after all operations are complete
+//         res.status(200).json({ message: 'Data Saved Successfully!!' });
+//     } catch (error) {
+//         console.error('Error during saveDetails operation:', error);
+//         res.status(500).json({ error: 'Something went wrong, Please try again.' });
+//     }
+// };
 
 
 
