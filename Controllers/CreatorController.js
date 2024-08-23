@@ -190,6 +190,8 @@ const login = async (req, res) => {
 //             professional_title: jsonData.professional_title,
 //             professional_bio: jsonData.discription,
 //         };
+
+
 //         fileKeys.forEach((key, index) => {
 //             if (files[key]) {
 //                 userData[key] = urls[index];
@@ -269,7 +271,6 @@ const saveDetails = async (req, res) => {
     }
 };
 
-export default saveDetails;
 
 
 
