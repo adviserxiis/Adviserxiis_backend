@@ -204,20 +204,20 @@ const login = async (req, res) => {
 // }
 
 const saveDetails = async (req, res) => {
-    const files = req.files;
-    const { userid } = req.body;
-    const jsonData = JSON.parse(req.body.data);
-
-    // Validate mandatory fields
-    if (!userid || !jsonData.name || !jsonData.professional_title || !jsonData.discription || !jsonData.interests) {
-        return res.status(400).json({ error: 'userid, Name, Professional Title, Description, and Interests are required!' });
-    }
-
-    const fileKeys = ['profile_photo', 'profile_background'];
-    const uploadPromises = [];
-
     try {
-        // Parallelize file uploads
+        const files = req.files;
+        const { userid } = req.body;
+        const jsonData = JSON.parse(req.body.data);
+
+        // Validate mandatory fields
+        if (!userid || !jsonData.name || !jsonData.professional_title || !jsonData.discription || !jsonData.interests) {
+            return res.status(400).json({ error: 'userid, Name, Professional Title, Description, and Interests are required!' });
+        }
+
+        const fileKeys = ['profile_photo', 'profile_background'];
+        const uploadPromises = [];
+
+        // Optimize file uploads by parallelizing them
         fileKeys.forEach(key => {
             if (files[key]) {
                 const file = files[key][0];
@@ -225,15 +225,20 @@ const saveDetails = async (req, res) => {
                 const metadata = { contentType: file.mimetype };
 
                 const uploadPromise = uploadBytesResumable(storageRef, file.buffer, metadata)
-                    .then(snapshot => getDownloadURL(snapshot.ref));
+                    .then(snapshot => getDownloadURL(snapshot.ref))
+                    .catch(error => {
+                        console.error(`Error uploading ${key}:`, error);
+                        throw new Error(`Failed to upload ${key}`);
+                    });
 
                 uploadPromises.push(uploadPromise);
             }
         });
 
+        // Wait for all uploads to complete
         const downloadURLs = await Promise.all(uploadPromises);
 
-        // Create user data object with mandatory fields
+        // Construct user data object with mandatory fields
         const userData = {
             username: jsonData.name,
             interests: jsonData.interests,
@@ -246,21 +251,25 @@ const saveDetails = async (req, res) => {
             userData.social_links = jsonData.social_links;
         }
 
-        // Assign URLs to userData if files are uploaded
+        // Assign URLs to userData if files were uploaded
         fileKeys.forEach((key, index) => {
             if (files[key]) {
                 userData[key] = downloadURLs[index];
             }
         });
 
-        // Update database with user data
+        // Update the database with user data
         await database.ref('advisers/' + userid).update(userData);
+
+        // Send response after all operations are complete
         res.status(200).json({ message: 'Data Saved Successfully!!' });
     } catch (error) {
-        console.error('Error during file upload or database update:', error);
+        console.error('Error during saveDetails operation:', error);
         res.status(500).json({ error: 'Something went wrong, Please try again.' });
     }
 };
+
+export default saveDetails;
 
 
 
