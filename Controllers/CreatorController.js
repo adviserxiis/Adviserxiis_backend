@@ -210,33 +210,28 @@ const saveDetails = async (req, res) => {
 
     // Validate mandatory fields
     if (!userid || !jsonData.name || !jsonData.professional_title || !jsonData.discription || !jsonData.interests) {
-        return res.status(400).json({ error: 'userid, Name, Professional Title, Description,  are required!' });
+        return res.status(400).json({ error: 'userid, Name, Professional Title, Description, and Interests are required!' });
     }
 
     const fileKeys = ['profile_photo', 'profile_background'];
     const uploadPromises = [];
 
-    // Function to handle file uploads
-    async function uploadFiles() {
-        for (const key of fileKeys) {
+    try {
+        // Parallelize file uploads
+        fileKeys.forEach(key => {
             if (files[key]) {
                 const file = files[key][0];
                 const storageRef = sRef(storage, `images/${uuidv1()}`);
-                const metadata = {
-                    contentType: file.mimetype,
-                };
-                const snapshot = await uploadBytesResumable(storageRef, file.buffer, metadata);
-                const downloadURL = await getDownloadURL(snapshot.ref);
+                const metadata = { contentType: file.mimetype };
 
-                uploadPromises.push(Promise.resolve(downloadURL));
+                const uploadPromise = uploadBytesResumable(storageRef, file.buffer, metadata)
+                    .then(snapshot => getDownloadURL(snapshot.ref));
+
+                uploadPromises.push(uploadPromise);
             }
-        }
-        const downloadURLs = await Promise.all(uploadPromises);
-        return downloadURLs;
-    }
+        });
 
-    try {
-        const urls = await uploadFiles();
+        const downloadURLs = await Promise.all(uploadPromises);
 
         // Create user data object with mandatory fields
         const userData = {
@@ -254,7 +249,7 @@ const saveDetails = async (req, res) => {
         // Assign URLs to userData if files are uploaded
         fileKeys.forEach((key, index) => {
             if (files[key]) {
-                userData[key] = urls[index];
+                userData[key] = downloadURLs[index];
             }
         });
 
@@ -262,10 +257,11 @@ const saveDetails = async (req, res) => {
         await database.ref('advisers/' + userid).update(userData);
         res.status(200).json({ message: 'Data Saved Successfully!!' });
     } catch (error) {
-        console.error('Error during file upload:', error);
+        console.error('Error during file upload or database update:', error);
         res.status(500).json({ error: 'Something went wrong, Please try again.' });
     }
 };
+
 
 
 const getUserDetails = async (req, res) => {
