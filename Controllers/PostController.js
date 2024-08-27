@@ -299,6 +299,44 @@ const addViews = async (req, res) =>{
   }
 }
 
+
+const deletePost = async(req, res) =>{
+  const { postid, adviserid } = req.body;
+
+  // Validate input
+  if (!postid || !adviserid) {
+    return res.status(400).json({ error: 'Post ID and Adviser ID are required' });
+  }
+
+  try {
+
+    // Remove the post from 'advisers_posts'
+    await database.ref(`advisers_posts/${postid}`).remove();
+
+    // Fetch the adviser's data
+    const adviserRef = database.ref(`advisers/${adviserid}`);
+    const snapshot = await adviserRef.get();
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: 'Adviser not found' });
+    }
+
+    const adviserData = snapshot.val();
+    const currentPosts = adviserData.posts || [];
+
+    // Filter out the deleted post ID
+    const updatedPosts = currentPosts.filter(id => id !== postid);
+
+    // Update the adviser's post list in the database
+    await adviserRef.update({ posts: updatedPosts });
+
+    return res.status(200).json({ message: 'Post deleted successfully'});
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    return res.status(500).json({ error: 'An error occurred while deleting the post' });
+  }
+}
+
 export {
     getAllPostsWithAdviser,
     addLike,
@@ -306,6 +344,7 @@ export {
     getAllPostsOfAdviser,
     createPost,
     sharePost,
-    addViews
+    addViews,
+    deletePost
 
 }
