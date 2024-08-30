@@ -482,7 +482,7 @@ const unfollowCreator = async (req, res) => {
 
 const signinwithGoogle = async (req, res) =>{
 
-    const { email } = req.body;
+    const { email , username , profile_photo} = req.body;
 
     if (!email ) {
         return res.status(400).json({ error: 'Email is required' });
@@ -492,6 +492,12 @@ const signinwithGoogle = async (req, res) =>{
         const userExists = await isUserExist(email);
         if (userExists) {
             const userid = await getUserId(email);
+            const userData = {
+                email: email,
+                username:username,
+                profile_photo:profile_photo,
+            };
+            await database.ref('advisers/' + userid).set(userData);
             return res.status(200).json({ message: 'Login Successfully!!', userid });
         }
 
@@ -499,6 +505,8 @@ const signinwithGoogle = async (req, res) =>{
             const userid = uuidv1();
             const userData = {
                 email: email,
+                username:username,
+                profile_photo:profile_photo,
             };
             await database.ref('advisers/' + userid).set(userData);
             res.status(200).json({ message: 'Login Successfully!!', userid });
