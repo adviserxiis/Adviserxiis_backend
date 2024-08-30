@@ -492,12 +492,12 @@ const signinwithGoogle = async (req, res) =>{
         const userExists = await isUserExist(email);
         if (userExists) {
             const userid = await getUserId(email);
-            const userData = {
-                email: email,
-                username:username,
-                profile_photo:profile_photo,
-            };
-            await database.ref('advisers/' + userid).set(userData);
+            // const userData = {
+            //     email: email,
+            //     username:username,
+            //     profile_photo:profile_photo,
+            // };
+            // await database.ref('advisers/' + userid).set(userData);
             return res.status(200).json({ message: 'Login Successfully!!', userid });
         }
 
