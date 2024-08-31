@@ -303,9 +303,10 @@ const getUserByUsername = async (req, res) => {
             return res.status(404).json({ message: 'No data available' });
         }
 
-        // Filter users based on the key, or return the full list if the key is empty
-        const filteredAdvisers = Object.values(advisers)
-            .filter(adviser => key ? adviser.username.toLowerCase().includes(key.toLowerCase()) : true);
+        // Filter users: exclude those without a username, and match the key if provided
+        const filteredAdvisers = Object.values(advisers).filter(adviser =>
+            adviser.username && adviser.username.toLowerCase().includes(key.toLowerCase())
+        );
 
         res.status(200).json(filteredAdvisers);
     } catch (error) {
@@ -313,6 +314,8 @@ const getUserByUsername = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+
 
 
 const sendResetPasswordOtp = async (req, res) => {
