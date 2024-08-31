@@ -304,9 +304,11 @@ const getUserByUsername = async (req, res) => {
         }
 
         // Filter users: exclude those without a username, and match the key if provided
-        const filteredAdvisers = Object.values(advisers).filter(adviser =>
-            adviser.username && adviser.username.toLowerCase().includes(key.toLowerCase())
-        );
+        const filteredAdvisers = Object.entries(advisers)
+            .filter(([id, adviser]) =>
+                adviser.username && adviser.username.toLowerCase().includes(key.toLowerCase())
+            )
+            .map(([id, adviser]) => ({ id, ...adviser }));
 
         res.status(200).json(filteredAdvisers);
     } catch (error) {
