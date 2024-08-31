@@ -92,6 +92,7 @@ const signUp = async (req, res) => {
 
         const hashedPassword = await hashPassword(password);
         const userExists = await isUserExist(email);
+        const date = new Date().toString();
 
         if (userExists) {
             return res.status(400).json({ error: 'User already exists with this email' });
@@ -100,6 +101,7 @@ const signUp = async (req, res) => {
         const userData = {
             email: email,
             password: hashedPassword,
+            created_at:date
         };
 
         await database.ref('advisers/' + userid).set(userData);
@@ -508,10 +510,12 @@ const signinwithGoogle = async (req, res) =>{
 
         else{
             const userid = uuidv1();
+            const date = new Date().toString();
             const userData = {
                 email: email,
                 username:username,
                 profile_photo:profile_photo,
+                created_at:date
             };
             await database.ref('advisers/' + userid).set(userData);
             res.status(200).json({ message: 'Login Successfully!!', userid });
