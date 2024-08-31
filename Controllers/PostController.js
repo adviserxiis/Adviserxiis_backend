@@ -184,9 +184,9 @@ const getAllPostsOfAdviser = async (req, res) => {
 };
 
 const createPost = async (req, res) => {
-  const { adviserid, description, location, videoURL,fileType } = req.body;
+  const { adviserid, description, location, videoURL,fileType, duration } = req.body;
 
-  if (!adviserid || !videoURL || !fileType) {
+  if (!adviserid || !videoURL || !fileType ||!duration) {
       return res.status(400).json({ error: 'Adviser ID and video file are required' });
   }
 
@@ -206,6 +206,7 @@ const createPost = async (req, res) => {
           adviserid: adviserid,
           post_file: videoURL,
           file_type: fileType,
+          video_duration:duration,
           dop: new Date().toString(),
           views: [],
           likes: [],
@@ -220,7 +221,7 @@ const createPost = async (req, res) => {
         {
           postData.location = location
         }
-      
+
       await database.ref('advisers_posts/' + postid).set(postData);
 
       const adviserData = await getAdviser(adviserid)
