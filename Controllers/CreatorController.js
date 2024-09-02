@@ -158,7 +158,7 @@ const saveDetails = async (req, res) => {
     const { userid } = req.body
     const jsonData = JSON.parse(req.body.data);
 
-    if ( !userid || !jsonData.name || !jsonData.professional_title || !jsonData.discription || !jsonData.interests ) {
+    if ( !userid || !jsonData.name || !jsonData.professional_title || !jsonData.discription ) {
         return res.status(400).json({ error: 'All Fields are required!!' });
     }
 
@@ -187,10 +187,13 @@ const saveDetails = async (req, res) => {
         const urls = await uploadFiles();
         const userData = {
             username: jsonData.name,
-            interests: jsonData.interests,
             professional_title: jsonData.professional_title,
             professional_bio: jsonData.discription,
         };
+
+                        if (jsonData.interests) {
+            userData.interests = jsonData.interests;
+        }
 
                 if (jsonData.social_links) {
             userData.social_links = jsonData.social_links;
