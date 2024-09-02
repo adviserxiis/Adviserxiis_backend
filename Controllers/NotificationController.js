@@ -6,7 +6,7 @@ const sendNotification = async (req, res) => {
     const { deviceToken, title, body } = req.body;
   
     if (!deviceToken || !title || !body) {
-      return res.status(400).json({ message: 'Device token, title, and body are required.' });
+      return res.status(400).json({ error: 'Device token, title, and body are required.' });
     }
   
     const message = {
