@@ -6,7 +6,10 @@ import { ref as sRef, uploadBytesResumable } from 'firebase/storage';
 import { getDownloadURL, getStorage, uploadBytes } from 'firebase/storage'
 import otpGenerator from 'otp-generator'
 import nodemailer from 'nodemailer';
+import util from 'util'
 
+
+const comparePassword = util.promisify(bcrypt.compare);
 const storage = getStorage()
 
 const generateOTP = () => {
@@ -113,44 +116,82 @@ const signUp = async (req, res) => {
 }
 
 
+// const login = async (req, res) => {
+//     const { email, password } = req.body;
+//     try {
+//         const snapshot = await database.ref('advisers').once('value');
+//         if (snapshot.exists()) {
+//             let userFound = false;
+
+//             snapshot.forEach((childSnapshot) => {
+//                 const userData = childSnapshot.val();
+//                 if (userData.email === email) {
+//                     userFound = true;
+//                     bcrypt.compare(password, userData.password, (err, isMatch) => {
+//                         if (err) {
+//                             return res.status(500).json({ error: 'Error comparing passwords' });
+//                         }
+//                         if (isMatch) {
+//                             const userid = childSnapshot.key;
+//                             // Store adviserId in the session or send it in the response
+//                             res.status(200).json({ message: 'Login successful', userid });
+//                         } else {
+//                             res.status(401).json({ error: 'Invalid email or password' });
+//                         }
+//                     });
+//                     return true; // Exit the forEach loop once the user is found
+//                 }
+//             });
+
+//             if (!userFound) {
+//                 res.status(404).json({ error: 'User not found' });
+//             }
+//         } else {
+//             res.status(404).json({ error: 'No data available' });
+//         }
+//     } catch (error) {
+//         console.error('Error during login:', error);
+//         res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+//     }
+// }
+
 const login = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, deviceToken } = req.body;
     try {
         const snapshot = await database.ref('advisers').once('value');
         if (snapshot.exists()) {
             let userFound = false;
 
-            snapshot.forEach((childSnapshot) => {
-                const userData = childSnapshot.val();
+            for (const [userid, userData] of Object.entries(snapshot.val())) {
                 if (userData.email === email) {
                     userFound = true;
-                    bcrypt.compare(password, userData.password, (err, isMatch) => {
-                        if (err) {
-                            return res.status(500).json({ error: 'Error comparing passwords' });
+                    const isMatch = await bcrypt.compare(password, userData.password);
+
+                    if (isMatch) {
+                        console.log("userid", userid);
+                        // Store adviserId in the session or send it in the response
+                        if (deviceToken) {
+                            await database.ref('advisers/' + userid).update({ device_token: deviceToken });
                         }
-                        if (isMatch) {
-                            const userid = childSnapshot.key;
-                            // Store adviserId in the session or send it in the response
-                            res.status(200).json({ message: 'Login successful', userid });
-                        } else {
-                            res.status(401).json({ error: 'Invalid email or password' });
-                        }
-                    });
-                    return true; // Exit the forEach loop once the user is found
+                        return res.status(200).json({ message: 'Login successful', userid });
+                    } else {
+                        return res.status(401).json({ error: 'Invalid email or password' });
+                    }
                 }
-            });
+            }
 
             if (!userFound) {
-                res.status(404).json({ error: 'User not found' });
+                return res.status(404).json({ error: 'User not found' });
             }
         } else {
-            res.status(404).json({ error: 'No data available' });
+            return res.status(404).json({ error: 'No data available' });
         }
     } catch (error) {
         console.error('Error during login:', error);
-        res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+        return res.status(500).json({ error: 'Something went wrong. Please try again later.' });
     }
-}
+};
+
 
 
 const saveDetails = async (req, res) => {
@@ -492,7 +533,7 @@ const unfollowCreator = async (req, res) => {
 
 const signinwithGoogle = async (req, res) =>{
 
-    const { email , username , profile_photo} = req.body;
+    const { email , username , profile_photo, deviceToken} = req.body;
 
     if (!email ) {
         return res.status(400).json({ error: 'Email is required' });
@@ -508,6 +549,10 @@ const signinwithGoogle = async (req, res) =>{
             //     profile_photo:profile_photo,
             // };
             // await database.ref('advisers/' + userid).set(userData);
+            if (deviceToken) {
+                await database.ref('advisers/' + userid).update({ device_token: deviceToken });
+            }
+
             return res.status(200).json({ message: 'Login Successfully!!', userid });
         }
 
@@ -520,6 +565,10 @@ const signinwithGoogle = async (req, res) =>{
                 profile_photo:profile_photo,
                 created_at:date
             };
+            if(deviceToken)
+            {
+                userData.device_token = deviceToken
+            }
             await database.ref('advisers/' + userid).set(userData);
             res.status(200).json({ message: 'Login Successfully!!', userid });
         }
