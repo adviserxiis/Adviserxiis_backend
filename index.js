@@ -13,6 +13,7 @@ import userRoutes from './Routes/UserRoutes.js'
 import postRoutes from './Routes/PostRoutes.js'
 import testRoutes from './Routes/TestRoutes.js'
 import creatorRoutes from './Routes/CreatorRoutes.js'
+import notificationRoutes from './Routes/NotificationRoutes.js'
 
 const PORT = process.env.PORT || 8000
 
@@ -97,6 +98,8 @@ app.use('/post',postRoutes)
 app.use('/creator',creatorRoutes)
 
 app.use('/test',testRoutes)
+
+app.use('/notification',notificationRoutes)
 
 
 app.listen(PORT, () =>{

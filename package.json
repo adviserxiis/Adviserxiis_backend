@@ -25,6 +25,7 @@
     "nodemailer": "^6.9.14",
     "otp-generator": "^4.0.1",
     "razorpay": "^2.9.4",
+    "util": "^0.12.5",
     "uuid": "^10.0.0"
   }
 }
