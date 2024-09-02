@@ -107,7 +107,7 @@ const addLike = async(req, res)=>{
 
     await database.ref(`advisers_posts/${postid}`).update({ likes: updatedLikes });
 
-    return res.status(200).json({ message: 'Post liked successfully', likes: updatedLikes });
+    return res.status(200).json({ message: 'Post liked successfully'});
   } catch (error) {
     console.error('Error updating likes:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -136,7 +136,7 @@ const removeLike = async(req, res)=>{
 
     await database.ref(`advisers_posts/${postid}`).update({ likes: updatedLikes });
 
-    return res.status(200).json({ message: 'Like removed successfully', likes: updatedLikes });
+    return res.status(200).json({ message: 'Like removed successfully', });
   } catch (error) {
     console.error('Error updating likes:', error);
     return res.status(500).json({ error: 'Internal server error' });
