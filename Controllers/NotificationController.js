@@ -28,15 +28,15 @@ const sendNotification = async (req, res) => {
   };
 
 
+
   const sendNotificationToAllCreators = async (req, res) => {
     const { title, body, latest_version } = req.body;
   
-    if (!title || !body) {
-      return res.status(400).json({ error: 'Title and body are required.' });
+    if (!title || !body || !latest_version) {
+      return res.status(400).json({ error: 'Title, body, and latest_version are required.' });
     }
   
     try {
-      // Fetch all advisers from the database
       const advisersRef = database.ref('advisers');
       const snapshot = await advisersRef.once('value');
   
@@ -44,9 +44,8 @@ const sendNotification = async (req, res) => {
         return res.status(404).json({ error: 'No advisers found.' });
       }
   
-      const deviceTokens = [];
+      let deviceTokens = [];
   
-      // Loop through each adviser and collect the device tokens
       snapshot.forEach((childSnapshot) => {
         const adviserData = childSnapshot.val();
         if (adviserData.device_token) {
@@ -54,11 +53,17 @@ const sendNotification = async (req, res) => {
         }
       });
   
+      // Remove duplicate tokens
+      deviceTokens = [...new Set(deviceTokens)];
+
+      // console.log("device_token", deviceTokens)
+  
       if (deviceTokens.length === 0) {
         return res.status(404).json({ error: 'No device tokens found for advisers.' });
       }
   
-      // Prepare and send notification to each adviser
+
+      
       const sendPromises = deviceTokens.map((token) => {
         const message = {
           notification: {
@@ -66,18 +71,24 @@ const sendNotification = async (req, res) => {
             body: body,
           },
           data: {
-            latest_version: latest_version, // Add custom data here
+            latest_version: latest_version,
           },
           token: token,
         };
   
-        return admin.messaging().send(message);
+        return admin.messaging().send(message).catch((error) => {
+          if (error.code === 'messaging/registration-token-not-registered') {
+            console.warn(`Token not registered: ${token}`);
+            // Optionally remove invalid token from database here
+          } else {
+            throw error;
+          }
+        });
       });
   
-      // // Wait for all notifications to be sent
       const responses = await Promise.all(sendPromises);
   
-      console.log('Notifications sent successfully:', responses);
+      // console.log('Notifications sent successfully:', responses);
       res.status(200).json({ message: 'Notifications sent successfully', responses });
   
     } catch (error) {
@@ -85,7 +96,7 @@ const sendNotification = async (req, res) => {
       res.status(500).json({ message: 'Error sending notifications', error });
     }
   };
-  
+   
 
 
   export {
