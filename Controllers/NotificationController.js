@@ -1,5 +1,5 @@
 
-import { admin, database,latest_version } from "../firebaseAdmin.js";
+import { admin, database } from "../firebaseAdmin.js";
 
 
 const sendNotification = async (req, res) => {
@@ -29,7 +29,7 @@ const sendNotification = async (req, res) => {
 
 
   const sendNotificationToAllCreators = async (req, res) => {
-    const { title, body } = req.body;
+    const { title, body, latest_version } = req.body;
   
     if (!title || !body) {
       return res.status(400).json({ error: 'Title and body are required.' });
