@@ -1,5 +1,5 @@
 
-import { admin, database } from "../firebaseAdmin.js";
+import { admin, database,latest_version } from "../firebaseAdmin.js";
 
 
 const sendNotification = async (req, res) => {
@@ -64,6 +64,9 @@ const sendNotification = async (req, res) => {
           notification: {
             title: title,
             body: body,
+          },
+          data: {
+            latest_version: latest_version, // Add custom data here
           },
           token: token,
         };
