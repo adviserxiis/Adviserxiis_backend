@@ -303,8 +303,8 @@ const saveDetails = async (req, res) => {
             userData[key] = downloadURL;
         });
 
-        // await database.ref('advisers/' + userid).update(userData);
-        res.status(200).json({ message: 'Data Saved Successfully!!' ,userData });
+        await database.ref('advisers/' + userid).update(userData);
+        res.status(200).json({ message: 'Data Saved Successfully!!' });
     } catch (error) {
         console.error('Error during file upload:', error);
         res.status(500).json({ error: 'Something went wrong. Please try again later.' });
