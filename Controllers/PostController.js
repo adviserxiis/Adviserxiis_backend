@@ -99,7 +99,7 @@ const addLike = async(req, res)=>{
 
     const currentLikes = postData.likes || [];
     if (currentLikes.includes(userid)) {
-      return res.status(400).json({ error: 'User has already liked this post' });
+      return res.status(200).json({ message: 'User has already liked this post' });
     }
 
     const updatedLikes = [...currentLikes, userid];
