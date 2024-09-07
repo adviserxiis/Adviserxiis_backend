@@ -75,7 +75,7 @@ async function getPost(postid) {
 //     }
 // }
 
-const getAllPostsWithAdviser = async (req, res) => {
+const getAllReelsWithAdviser = async (req, res) => {
   const nodeRef = database.ref('advisers_posts');
 
   try {
@@ -550,7 +550,7 @@ const deletePost = async(req, res) =>{
 }
 
 export {
-    getAllPostsWithAdviser,
+    getAllReelsWithAdviser,
     addLike,
     removeLike,
     getAllPostsOfAdviser,

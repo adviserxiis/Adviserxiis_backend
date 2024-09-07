@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addLike, addViews, createImagePost, createPost, createTextPost, createVideoPost, deletePost, getAllPostsOfAdviser, getAllPostsWithAdviser, removeLike, sharePost } from "../Controllers/PostController.js";
+import { addLike, addViews, createImagePost, createPost, createTextPost, createVideoPost, deletePost, getAllPosts, getAllPostsOfAdviser, getAllReelsWithAdviser, removeLike, sharePost } from "../Controllers/PostController.js";
 import multer from 'multer';
 
 
@@ -7,7 +7,8 @@ const router = new Router();
 const upload = multer();
 
 
-router.route('/getallpostswithadviserdetails').get(getAllPostsWithAdviser)
+router.route('/getallpostswithadviserdetails').get(getAllReelsWithAdviser)
+router.route('/getallposts').get(getAllPosts)
 router.route('/addlike').post(addLike)
 router.route('/removelike').post(removeLike)
 router.route('/getpostsofadviser/:adviserid').get(getAllPostsOfAdviser)
