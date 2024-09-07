@@ -117,6 +117,46 @@ const getAllPostsWithAdviser = async (req, res) => {
 };
 
 
+const getAllPosts = async (req, res) => {
+  const nodeRef = database.ref('advisers_posts');
+
+  try {
+    const snapshot = await nodeRef.once('value');
+    if (snapshot.exists()) {
+      const posts = [];
+      
+      // Filter posts with file_type = "video"
+      snapshot.forEach(childSnapshot => {
+        const postData = childSnapshot.val();
+          posts.push({ data: postData, id: childSnapshot.key });
+        
+      });
+
+      const details = await Promise.all(
+        posts.map(async (post) => {
+          const adviser = await getAdviser(post.data.adviserid);
+          return { ...post, adviser };
+        })
+      );
+
+      // Sort by date
+      details.sort((a, b) => {
+        const dateA = new Date(a.data.dop).getTime();
+        const dateB = new Date(b.data.dop).getTime();
+        return dateB - dateA;
+      });
+
+      res.status(200).json(details);
+    } else {
+      console.log('No data available');
+      res.status(200).json([]);
+    }
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 const addLike = async(req, res)=>{
   const { userid, postid } = req.body;
 
@@ -520,6 +560,7 @@ export {
     deletePost,
     createTextPost,
     createImagePost,
-    createVideoPost
+    createVideoPost,
+    getAllPosts
 
 }
