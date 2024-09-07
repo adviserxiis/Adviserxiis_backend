@@ -39,50 +39,83 @@ async function getPost(postid) {
   }
 
 
-const getAllPostsWithAdviser = async(req, res)=>{
-    const nodeRef = database.ref('advisers_posts');
+// const getAllPostsWithAdviser = async(req, res)=>{
+//     const nodeRef = database.ref('advisers_posts');
 
-    try {
-      const snapshot = await nodeRef.once('value');
-      if (snapshot.exists()) {
-        const posts = [];
-        snapshot.forEach(childSnapshot => {
-          posts.push({ data: childSnapshot.val(), id: childSnapshot.key });
-        });
+//     try {
+//       const snapshot = await nodeRef.once('value');
+//       if (snapshot.exists()) {
+//         const posts = [];
+//         snapshot.forEach(childSnapshot => {
+//           posts.push({ data: childSnapshot.val(), id: childSnapshot.key });
+//         });
   
-        const details = await Promise.all(
-          posts.map(async (post) => {
-            const adviser = await getAdviser(post.data.adviserid);
-            return { ...post, adviser };
-          })
-        );
+//         const details = await Promise.all(
+//           posts.map(async (post) => {
+//             const adviser = await getAdviser(post.data.adviserid);
+//             return { ...post, adviser };
+//           })
+//         );
   
-        // Sort by date (latest posts first)
-        details.sort((a, b) => {
-          const dateA = new Date(a.data.dop).getTime();
-          const dateB = new Date(b.data.dop).getTime();
-          return dateB - dateA;
-        });
+
+//         details.sort((a, b) => {
+//           const dateA = new Date(a.data.dop).getTime();
+//           const dateB = new Date(b.data.dop).getTime();
+//           return dateB - dateA;
+//         });
   
-        // const specificPostId = req.query.specificPostId;
-        // if (specificPostId) {
-        //   const postIndex = details.findIndex(post => post.id === specificPostId);
-        //   if (postIndex !== -1) {
-        //     const postToMove = details.splice(postIndex, 1)[0];
-        //     details.unshift(postToMove);
-        //   }
-        // }
-  
-        res.status(200).json(details);
-      } else {
-        console.log('No data available');
-        res.status(200).json([]);
-      }
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-      res.status(500).json({ error: 'Internal server error' });
+//         res.status(200).json(details);
+//       } else {
+//         console.log('No data available');
+//         res.status(200).json([]);
+//       }
+//     } catch (error) {
+//       console.error('Error fetching posts:', error);
+//       res.status(500).json({ error: 'Internal server error' });
+//     }
+// }
+
+const getAllPostsWithAdviser = async (req, res) => {
+  const nodeRef = database.ref('advisers_posts');
+
+  try {
+    const snapshot = await nodeRef.once('value');
+    if (snapshot.exists()) {
+      const posts = [];
+      
+      // Filter posts with file_type = "video"
+      snapshot.forEach(childSnapshot => {
+        const postData = childSnapshot.val();
+        if (postData.file_type === "video") {
+          posts.push({ data: postData, id: childSnapshot.key });
+        }
+      });
+
+      const details = await Promise.all(
+        posts.map(async (post) => {
+          const adviser = await getAdviser(post.data.adviserid);
+          return { ...post, adviser };
+        })
+      );
+
+      // Sort by date
+      details.sort((a, b) => {
+        const dateA = new Date(a.data.dop).getTime();
+        const dateB = new Date(b.data.dop).getTime();
+        return dateB - dateA;
+      });
+
+      res.status(200).json(details);
+    } else {
+      console.log('No data available');
+      res.status(200).json([]);
     }
-}
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 const addLike = async(req, res)=>{
   const { userid, postid } = req.body;
@@ -153,7 +186,7 @@ const getAllPostsOfAdviser = async (req, res) => {
       const posts = [];
       snapshot.forEach(childSnapshot => {
         const postData = childSnapshot.val();
-        if ( postData.adviserid === adviserId) {
+        if ( postData.adviserid === adviserId && postData.file_type === "video") {
           posts.push({ data: postData, id: childSnapshot.key });
         }
       });
@@ -166,11 +199,11 @@ const getAllPostsOfAdviser = async (req, res) => {
       // );
 
       // // Sort by date (latest posts first)
-      // details.sort((a, b) => {
-      //   const dateA = new Date(a.data.dop).getTime();
-      //   const dateB = new Date(b.data.dop).getTime();
-      //   return dateB - dateA;
-      // });
+      posts.sort((a, b) => {
+        const dateA = new Date(a.data.dop).getTime();
+        const dateB = new Date(b.data.dop).getTime();
+        return dateB - dateA;
+      });
 
       res.status(200).json(posts);
     } else {
