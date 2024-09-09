@@ -273,21 +273,21 @@ const getAllHomePostsOfAdviser = async (req, res) => {
         }
       });
 
-      // const details = await Promise.all(
-      //   posts.map(async (post) => {
-      //     const adviser = await getAdviser(post.data.adviserid);
-      //     return { ...post, adviser };
-      //   })
-      // );
+      const details = await Promise.all(
+        posts.map(async (post) => {
+          const adviser = await getAdviser(post.data.adviserid);
+          return { ...post, adviser };
+        })
+      );
 
       // // Sort by date (latest posts first)
-      posts.sort((a, b) => {
+      details.sort((a, b) => {
         const dateA = new Date(a.data.dop).getTime();
         const dateB = new Date(b.data.dop).getTime();
         return dateB - dateA;
       });
 
-      res.status(200).json(posts);
+      res.status(200).json(details);
     } else {
       console.log('No data available');
       res.status(200).json([]);
