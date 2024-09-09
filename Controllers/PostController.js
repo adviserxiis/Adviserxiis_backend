@@ -332,7 +332,7 @@ const createTextPost = async (req, res) => {
     // Create the post data for a text post
     const postData = {
       adviserid: adviserid,
-      message: message,
+      description: message,
       file_type: 'text', // Indicate this is a text post
       dop: new Date().toString(),
       views: [],
