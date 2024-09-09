@@ -117,7 +117,7 @@ const getAllReelsWithAdviser = async (req, res) => {
 };
 
 
-const getAllPosts = async (req, res) => {
+const getAllPostsForHome = async (req, res) => {
   const nodeRef = database.ref('advisers_posts');
 
   try {
@@ -128,7 +128,9 @@ const getAllPosts = async (req, res) => {
       // Filter posts with file_type = "video"
       snapshot.forEach(childSnapshot => {
         const postData = childSnapshot.val();
+        if (postData.file_type !== "video") {
           posts.push({ data: postData, id: childSnapshot.key });
+        }
         
       });
 
@@ -424,7 +426,7 @@ const createVideoPost = async (req, res) => {
     const postData = {
       adviserid: adviserid,
       post_file: videoURL,
-      file_type: 'video',
+      file_type: 'long_video',
       video_duration:duration,
       dop: new Date().toString(),
       views: [],
@@ -449,8 +451,6 @@ const createVideoPost = async (req, res) => {
     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
   }
 };
-
-
 
 
 const sharePost = async (req, res) =>{
@@ -549,6 +549,43 @@ const deletePost = async(req, res) =>{
   }
 }
 
+const addComment = async (req, res) => {
+  const { adviserid, postid, message } = req.body;
+  
+  if (!adviserid || !postid || !message) {
+    return res.status(400).json({ error: 'Adviser ID, Post ID and message are required' });
+  }
+
+  try {
+    const postRef = database.ref(`adviser_posts/${postid}`);
+    const postSnapshot = await postRef.once('value');
+
+    if (!postSnapshot.exists()) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const postData = postSnapshot.val();
+    const currentComments = postData.comments || [];
+    const date = new Date().toString();
+
+    const newComment = {
+      message: message,
+      adviserid: adviserid,
+      date: date,
+      likes: [] 
+    };
+
+    currentComments.push(newComment);
+
+    await postRef.update({ comments: currentComments });
+    return res.status(200).json({ message: 'Comment added successfully',});
+
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    return res.status(500).json({ error: 'An error occurred while adding the comment' });
+  }
+};
+
 export {
     getAllReelsWithAdviser,
     addLike,
@@ -561,6 +598,7 @@ export {
     createTextPost,
     createImagePost,
     createVideoPost,
-    getAllPosts
+    getAllPostsForHome,
+    addComment
 
 }
