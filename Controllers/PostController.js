@@ -258,6 +258,46 @@ const getAllPostsOfAdviser = async (req, res) => {
   }
 };
 
+const getAllHomePostsOfAdviser = async (req, res) => {
+  const nodeRef = database.ref('advisers_posts');
+  const adviserId = req.params.adviserid;
+
+  try {
+    const snapshot = await nodeRef.once('value');
+    if (snapshot.exists()) {
+      const posts = [];
+      snapshot.forEach(childSnapshot => {
+        const postData = childSnapshot.val();
+        if ( postData.adviserid === adviserId && postData.file_type !== "video") {
+          posts.push({ data: postData, id: childSnapshot.key });
+        }
+      });
+
+      // const details = await Promise.all(
+      //   posts.map(async (post) => {
+      //     const adviser = await getAdviser(post.data.adviserid);
+      //     return { ...post, adviser };
+      //   })
+      // );
+
+      // // Sort by date (latest posts first)
+      posts.sort((a, b) => {
+        const dateA = new Date(a.data.dop).getTime();
+        const dateB = new Date(b.data.dop).getTime();
+        return dateB - dateA;
+      });
+
+      res.status(200).json(posts);
+    } else {
+      console.log('No data available');
+      res.status(200).json([]);
+    }
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 const createPost = async (req, res) => {
   const { adviserid, description, location, videoURL,fileType, duration } = req.body;
 
@@ -591,6 +631,7 @@ export {
     addLike,
     removeLike,
     getAllPostsOfAdviser,
+    getAllHomePostsOfAdviser,
     createPost,
     sharePost,
     addViews,
