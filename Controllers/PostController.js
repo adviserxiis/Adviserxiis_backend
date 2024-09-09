@@ -352,7 +352,7 @@ const createTextPost = async (req, res) => {
     // Update the adviser's post list in the 'advisers' node
     await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
 
-    res.status(200).json({ message: 'Text post created and data saved successfully' });
+    res.status(200).json({ message: 'Text post created and data saved successfully' ,postData});
   } catch (error) {
     console.error('Error during text post creation:', error);
     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
@@ -403,7 +403,7 @@ const createImagePost = async (req, res) => {
 
     await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
 
-    res.status(200).json({ message: 'Image uploaded and data saved successfully' });
+    res.status(200).json({ message: 'Image uploaded and data saved successfully' ,postData});
   } catch (error) {
     console.error('Error during image upload:', error);
     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
@@ -418,7 +418,7 @@ const createVideoPost = async (req, res) => {
 
   // Validate required fields
   if (!adviserid || !videoURL || !duration) {
-    return res.status(400).json({ error: 'Adviser ID, videoURL and Video duration are required' });
+    return res.status(400).json({ error: 'Adviser ID, videoURL and Video duration are required',postData });
   }
 
   try {
