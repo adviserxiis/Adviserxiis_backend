@@ -597,7 +597,7 @@ const addComment = async (req, res) => {
   }
 
   try {
-    const postRef = database.ref(`adviser_posts/${postid}`);
+    const postRef = database.ref(`advisers_posts/${postid}`);
     const postSnapshot = await postRef.once('value');
 
     if (!postSnapshot.exists()) {
