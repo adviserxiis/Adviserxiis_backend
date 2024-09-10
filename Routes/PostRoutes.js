@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addComment, addLike, addViews, createImagePost, createPost, createTextPost, createVideoPost, deletePost, getAllHomePostsOfAdviser, getAllPostsForHome, getAllPostsOfAdviser, getAllReelsWithAdviser, removeLike, sharePost } from "../Controllers/PostController.js";
+import { addComment, addLike, addViews, createImagePost, createPost, createTextPost, createVideoPost, deletePost, fetchCommentsWithAdviserDetails, getAllHomePostsOfAdviser, getAllPostsForHome, getAllPostsOfAdviser, getAllReelsWithAdviser, removeLike, sharePost } from "../Controllers/PostController.js";
 import multer from 'multer';
 
 
@@ -21,6 +21,7 @@ router.route('/createtextpost').post(createTextPost)
 router.route('/createvideopost').post(createVideoPost)
 router.post('/createimagepost', upload.single('image'), createImagePost);
 router.route('/addcomment').post(addComment)
+router.route('/fetchcomments/:postid').get(fetchCommentsWithAdviserDetails)
 
 
 export default router;

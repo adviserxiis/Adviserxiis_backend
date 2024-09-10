@@ -626,6 +626,61 @@ const addComment = async (req, res) => {
   }
 };
 
+const fetchCommentsWithAdviserDetails = async (req, res) => {
+  const { postid } = req.params;
+
+  if (!postid) {
+    return res.status(400).json({ error: 'Post ID is required' });
+  }
+
+  try {
+    // Get post comments from the post
+    const postRef = database.ref(`advisers_posts/${postid}`);
+    const postSnapshot = await postRef.once('value');
+
+    if (!postSnapshot.exists()) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const postData = postSnapshot.val();
+    const comments = postData.comments || [];
+
+    // Fetch adviser details for each comment
+    const commentsWithAdviserDetails = await Promise.all(
+      comments.map(async (comment) => {
+        const adviserRef = database.ref(`advisers/${comment.adviserid}`);
+        const adviserSnapshot = await adviserRef.once('value');
+
+        if (adviserSnapshot.exists()) {
+          const adviserData = adviserSnapshot.val();
+          return {
+            ...comment,
+            adviserDetails: {
+              id: comment.adviserid, // Using adviserid as the unique ID
+              username: adviserData.username,
+              professional_title: adviserData.professional_title,
+              profile_photo: adviserData.profile_photo
+            }
+          };
+        } else {
+          // If the adviser does not exist, return the comment without adviser details
+          return {
+            ...comment,
+            adviserDetails: null
+          };
+        }
+      })
+    );
+
+    return res.status(200).json({ comments: commentsWithAdviserDetails });
+
+  } catch (error) {
+    console.error('Error fetching comments with adviser details:', error);
+    return res.status(500).json({ error: 'An error occurred while fetching comments' });
+  }
+};
+
+
 export {
     getAllReelsWithAdviser,
     addLike,
@@ -640,6 +695,7 @@ export {
     createImagePost,
     createVideoPost,
     getAllPostsForHome,
-    addComment
+    addComment,
+    fetchCommentsWithAdviserDetails
 
 }
