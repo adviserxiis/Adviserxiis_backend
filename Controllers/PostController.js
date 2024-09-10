@@ -645,9 +645,12 @@ const fetchCommentsWithAdviserDetails = async (req, res) => {
     const postData = postSnapshot.val();
     const comments = postData.comments || [];
 
+    // Reverse the comments array so the last comment appears at the top
+    const reversedComments = comments.reverse();
+
     // Fetch adviser details for each comment
     const commentsWithAdviserDetails = await Promise.all(
-      comments.map(async (comment) => {
+      reversedComments.map(async (comment) => {
         const adviserRef = database.ref(`advisers/${comment.adviserid}`);
         const adviserSnapshot = await adviserRef.once('value');
 
@@ -679,6 +682,7 @@ const fetchCommentsWithAdviserDetails = async (req, res) => {
     return res.status(500).json({ error: 'An error occurred while fetching comments' });
   }
 };
+
 
 
 export {
