@@ -492,6 +492,75 @@ const createVideoPost = async (req, res) => {
   }
 };
 
+const createMediaPost = async (req, res) => {
+  const { adviserid, description, videoURLs, duration } = req.body;
+  const imageFiles = req.files; // Array of image files (handled by multer)
+
+  if (!adviserid || (!imageFiles && !videoURLs)) {
+    return res.status(400).json({ error: 'Adviser ID, at least one image or video is required' });
+  }
+
+  try {
+    const postid = uuidv1(); // Generate unique post ID
+    const storage = getStorage();
+    const images_array = []; // Array to store image URLs
+    const videos_array = []; // Array to store video URLs and their durations
+
+    // Handle image uploads (if provided)
+    if (imageFiles && imageFiles.length > 0) {
+      for (const file of imageFiles) {
+        const uniqueFileName = `${postid}_${Date.now()}_${file.originalname}`;
+        const fileRef = sRef(storage, `posts/${postid}/${uniqueFileName}`);
+
+        const snapshot = await uploadBytes(fileRef, file.buffer);
+        const imageUrl = await getDownloadURL(snapshot.ref);
+
+        // Push each uploaded image URL to images_array
+        images_array.push(imageUrl);
+      }
+    }
+
+    // Handle video URLs (if provided)
+    if (videoURLs && videoURLs.length > 0) {
+      videoURLs.forEach((videoURL, index) => {
+        // Push each video URL and corresponding duration to videos_array
+        videos_array.push({
+          video_url: videoURL,
+          video_duration: duration[index] || null, // Assuming 'duration' is an array
+        });
+      });
+    }
+
+    // Create post data object
+    const postData = {
+      adviserid: adviserid,
+      images_array: images_array,  // Array of image URLs
+      videos_array: videos_array,  // Array of video URLs with their durations
+      dop: new Date().toString(),
+      views: [],
+      likes: [],
+    };
+
+    if (description) {
+      postData.description = description;
+    }
+
+    // Save the post data to the database
+    await database.ref('advisers_posts/' + postid).set(postData);
+
+    // Update the adviser's post list
+    const adviserData = await getAdviser(adviserid);
+    const currentPosts = adviserData.data.posts || [];
+    const updatedPosts = [...currentPosts, postid];
+    await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
+
+    res.status(200).json({ message: 'Post created and media uploaded successfully', postData });
+  } catch (error) {
+    console.error('Error during media post creation:', error);
+    res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+  }
+};
+
 
 const sharePost = async (req, res) =>{
   const { postid } = req.body
@@ -626,6 +695,50 @@ const addComment = async (req, res) => {
   }
 };
 
+const deleteComment = async (req, res) => {
+  const { postid, commentIndex } = req.body;
+
+  if (!postid || commentIndex === undefined) {
+    return res.status(400).json({ error: 'Post ID and comment index are required' });
+  }
+
+  try {
+    const postRef = database.ref(`advisers_posts/${postid}`);
+    const postSnapshot = await postRef.once('value');
+
+    if (!postSnapshot.exists()) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const postData = postSnapshot.val();
+    const currentComments = postData.comments || [];
+
+    // Reverse the array to match the order of comments displayed in frontend
+    const originalOrderComments = [...currentComments].reverse();
+
+    // Check if the index is within bounds
+    if (commentIndex >= originalOrderComments.length || commentIndex < 0) {
+      return res.status(400).json({ error: 'Invalid comment index' });
+    }
+
+    // Remove the comment at the given index
+    originalOrderComments.splice(commentIndex, 1);
+
+    // Reverse back to the original order to save in Firebase
+    const updatedComments = originalOrderComments.reverse();
+
+    // Update the comments array in the database
+    await postRef.update({ comments: updatedComments });
+
+    return res.status(200).json({ message: 'Comment deleted successfully' });
+
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    return res.status(500).json({ error: 'An error occurred while deleting the comment' });
+  }
+};
+
+
 const fetchCommentsWithAdviserDetails = async (req, res) => {
   const { postid } = req.params;
 
@@ -699,7 +812,9 @@ export {
     createImagePost,
     createVideoPost,
     getAllPostsForHome,
+    createMediaPost,
     addComment,
-    fetchCommentsWithAdviserDetails
+    fetchCommentsWithAdviserDetails,
+    deleteComment
 
 }

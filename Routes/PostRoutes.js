@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addComment, addLike, addViews, createImagePost, createPost, createTextPost, createVideoPost, deletePost, fetchCommentsWithAdviserDetails, getAllHomePostsOfAdviser, getAllPostsForHome, getAllPostsOfAdviser, getAllReelsWithAdviser, removeLike, sharePost } from "../Controllers/PostController.js";
+import { addComment, addLike, addViews, createImagePost, createMediaPost, createPost, createTextPost, createVideoPost, deleteComment, deletePost, fetchCommentsWithAdviserDetails, getAllHomePostsOfAdviser, getAllPostsForHome, getAllPostsOfAdviser, getAllReelsWithAdviser, removeLike, sharePost } from "../Controllers/PostController.js";
 import multer from 'multer';
 
 
@@ -20,7 +20,9 @@ router.route('/deletepost').post(deletePost)
 router.route('/createtextpost').post(createTextPost)
 router.route('/createvideopost').post(createVideoPost)
 router.post('/createimagepost', upload.single('image'), createImagePost);
+router.post('/createmediapost', upload.array('images'),createMediaPost);
 router.route('/addcomment').post(addComment)
+router.route('/deletecomment').post(deleteComment)
 router.route('/fetchcomments/:postid').get(fetchCommentsWithAdviserDetails)
 
 
