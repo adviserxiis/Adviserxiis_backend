@@ -400,50 +400,107 @@ const createTextPost = async (req, res) => {
 };
 
 
+// const createImagePost = async (req, res) => {
+//   const { adviserid, description } = req.body;
+//   const file = req.file; 
+
+//   if (!adviserid || !file) {
+//     return res.status(400).json({ error: 'Adviser ID and image file are required' });
+//   }
+
+//   try {
+//     const postid = uuidv1();
+//     const storage = getStorage();
+    
+  
+//     const uniqueFileName = `${postid}_${Date.now()}_${file.originalname}`;
+//     const fileRef = sRef(storage, `posts/${postid}/${uniqueFileName}`); 
+
+//     const snapshot = await uploadBytes(fileRef, file.buffer);
+//     const imageUrl = await getDownloadURL(snapshot.ref); 
+
+
+//     const postData = {
+//       adviserid: adviserid,
+//       post_file: imageUrl,
+//       file_type: 'image',
+//       dop: new Date().toString(),
+//       views: [],
+//       likes: [],
+//     };
+
+//     if (description) {
+//       postData.description = description;
+//     }
+
+//     await database.ref('advisers_posts/' + postid).set(postData);
+
+
+//     const adviserData = await getAdviser(adviserid);
+//     const currentPosts = adviserData.data.posts || [];
+
+//     const updatedPosts = [...currentPosts, postid];
+
+//     await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
+
+//     res.status(200).json({ message: 'Image uploaded and data saved successfully' ,postData});
+//   } catch (error) {
+//     console.error('Error during image upload:', error);
+//     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+//   }
+// };
+
+
 const createImagePost = async (req, res) => {
   const { adviserid, description } = req.body;
-  const file = req.file; 
+  const files = req.files; // Array of image files (handled by multer)
 
-  if (!adviserid || !file) {
-    return res.status(400).json({ error: 'Adviser ID and image file are required' });
+  if (!adviserid || !files || files.length === 0) {
+    return res.status(400).json({ error: 'Adviser ID and at least one image file are required' });
   }
 
   try {
-    const postid = uuidv1();
+    const postid = uuidv1(); // Generate unique post ID
     const storage = getStorage();
-    
-  
-    const uniqueFileName = `${postid}_${Date.now()}_${file.originalname}`;
-    const fileRef = sRef(storage, `posts/${postid}/${uniqueFileName}`); 
+    const imageUrls = []; // Array to store image URLs
 
-    const snapshot = await uploadBytes(fileRef, file.buffer);
-    const imageUrl = await getDownloadURL(snapshot.ref); 
+    // Loop over each file and upload to Firebase Storage
+    for (const file of files) {
+      const uniqueFileName = `${postid}_${Date.now()}_${file.originalname}`;
+      const fileRef = sRef(storage, `posts/${postid}/${uniqueFileName}`);
 
+      const snapshot = await uploadBytes(fileRef, file.buffer);
+      const imageUrl = await getDownloadURL(snapshot.ref);
 
+      // Push each uploaded image URL to the imageUrls array
+      imageUrls.push(imageUrl);
+    }
+
+    // Create post data object
     const postData = {
       adviserid: adviserid,
-      post_file: imageUrl,
-      file_type: 'image',
+      post_file: imageUrls, // Array of image URLs
+      file_type: 'image', // Update to reflect multiple images
       dop: new Date().toString(),
       views: [],
       likes: [],
     };
 
+    // Optionally add a description
     if (description) {
       postData.description = description;
     }
 
+    // Save the post data to the database
     await database.ref('advisers_posts/' + postid).set(postData);
 
-
+    // Update the adviser's post list
     const adviserData = await getAdviser(adviserid);
     const currentPosts = adviserData.data.posts || [];
-
     const updatedPosts = [...currentPosts, postid];
-
     await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
 
-    res.status(200).json({ message: 'Image uploaded and data saved successfully' ,postData});
+    res.status(200).json({ message: 'Images uploaded and post created successfully', postData });
   } catch (error) {
     console.error('Error during image upload:', error);
     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
@@ -453,44 +510,97 @@ const createImagePost = async (req, res) => {
 
 
 
+// const createVideoPost = async (req, res) => {
+//   const { adviserid, videoURL, duration, description } = req.body;
+
+//   // Validate required fields
+//   if (!adviserid || !videoURL || !duration) {
+//     return res.status(400).json({ error: 'Adviser ID, videoURL and Video duration are required',postData });
+//   }
+
+//   try {
+//     const postid = uuidv1();
+//     const postData = {
+//       adviserid: adviserid,
+//       post_file: videoURL,
+//       file_type: 'long_video',
+//       video_duration:duration,
+//       dop: new Date().toString(),
+//       views: [],
+//       likes: [],
+//     };   
+//     if(description)
+//       {
+//         postData.description = description
+//       }
+
+//     await database.ref('advisers_posts/' + postid).set(postData);
+
+//     const adviserData = await getAdviser(adviserid);
+//     const currentPosts = adviserData.data.posts || []; 
+
+//     const updatedPosts = [...currentPosts, postid];
+//     await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
+
+//     res.status(200).json({ message: 'Video post created and data saved successfully'});
+//   } catch (error) {
+//     console.error('Error during Video post creation:', error);
+//     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+//   }
+// };
+
 const createVideoPost = async (req, res) => {
-  const { adviserid, videoURL, duration, description } = req.body;
+  const { adviserid, videoURLs, durations, description } = req.body;
 
   // Validate required fields
-  if (!adviserid || !videoURL || !duration) {
-    return res.status(400).json({ error: 'Adviser ID, videoURL and Video duration are required',postData });
+  if (!adviserid || !videoURLs || !durations || videoURLs.length === 0 || durations.length === 0) {
+    return res.status(400).json({ error: 'Adviser ID, at least one video URL, and corresponding duration are required' });
   }
 
   try {
-    const postid = uuidv1();
+    const postid = uuidv1(); // Generate unique post ID
+    const videos_array = []; // Array to store video URLs and their durations
+
+    // Loop through each video URL and its corresponding duration
+    videoURLs.forEach((videoURL, index) => {
+      const videoDuration = durations[index] || null; // Get duration or set to null if missing
+      videos_array.push({
+        video_url: videoURL,
+        video_duration: videoDuration,
+      });
+    });
+
+    // Create post data object
     const postData = {
       adviserid: adviserid,
-      post_file: videoURL,
-      file_type: 'long_video',
-      video_duration:duration,
+      file_type: 'long_video', // Indicating that it's a post with multiple videos
+      post_file: videos_array, // Array of video URLs with their durations
       dop: new Date().toString(),
       views: [],
       likes: [],
-    };   
-    if(description)
-      {
-        postData.description = description
-      }
+    };
 
+    // Optionally add a description
+    if (description) {
+      postData.description = description;
+    }
+
+    // Save the post data to the database
     await database.ref('advisers_posts/' + postid).set(postData);
 
+    // Update the adviser's post list
     const adviserData = await getAdviser(adviserid);
-    const currentPosts = adviserData.data.posts || []; 
-
+    const currentPosts = adviserData.data.posts || [];
     const updatedPosts = [...currentPosts, postid];
     await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
 
-    res.status(200).json({ message: 'Video post created and data saved successfully'});
+    res.status(200).json({ message: 'Video post created and data saved successfully', postData });
   } catch (error) {
     console.error('Error during Video post creation:', error);
     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
   }
 };
+
 
 const createMediaPost = async (req, res) => {
   const { adviserid, description, videoURLs, duration } = req.body;

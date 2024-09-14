@@ -19,7 +19,8 @@ router.route('/addviews').post(addViews)
 router.route('/deletepost').post(deletePost)
 router.route('/createtextpost').post(createTextPost)
 router.route('/createvideopost').post(createVideoPost)
-router.post('/createimagepost', upload.single('image'), createImagePost);
+// router.post('/createimagepost', upload.single('image'), createImagePost);
+router.post('/createimagepost', upload.array('images'), createImagePost);
 router.post('/createmediapost', upload.array('images'),createMediaPost);
 router.route('/addcomment').post(addComment)
 router.route('/deletecomment').post(deleteComment)
