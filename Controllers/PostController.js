@@ -534,6 +534,7 @@ const createMediaPost = async (req, res) => {
     // Create post data object
     const postData = {
       adviserid: adviserid,
+      file_type: 'media',
       images_array: images_array,  // Array of image URLs
       videos_array: videos_array,  // Array of video URLs with their durations
       dop: new Date().toString(),
