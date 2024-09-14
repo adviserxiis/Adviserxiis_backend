@@ -462,21 +462,19 @@ const createImagePost = async (req, res) => {
   try {
     const postid = uuidv1(); // Generate unique post ID
     const storage = getStorage();
-    const imageUrls = []; // Array to store image URLs
 
-    // Loop over each file and upload to Firebase Storage
-    for (const file of files) {
+    // 1. Use Promise.all to parallelize file uploads
+    const uploadPromises = files.map(async (file) => {
       const uniqueFileName = `${postid}_${Date.now()}_${file.originalname}`;
       const fileRef = sRef(storage, `posts/${postid}/${uniqueFileName}`);
-
       const snapshot = await uploadBytes(fileRef, file.buffer);
-      const imageUrl = await getDownloadURL(snapshot.ref);
+      return getDownloadURL(snapshot.ref); // Return the URL of each uploaded image
+    });
 
-      // Push each uploaded image URL to the imageUrls array
-      imageUrls.push(imageUrl);
-    }
+    // Wait for all image uploads to complete
+    const imageUrls = await Promise.all(uploadPromises);
 
-    // Create post data object
+    // 2. Batch database updates to reduce individual calls
     const postData = {
       adviserid: adviserid,
       post_file: imageUrls, // Array of image URLs
@@ -486,26 +484,31 @@ const createImagePost = async (req, res) => {
       likes: [],
     };
 
-    // Optionally add a description
     if (description) {
       postData.description = description;
     }
 
-    // Save the post data to the database
-    await database.ref('advisers_posts/' + postid).set(postData);
+    // Save the post data to Firebase Realtime Database
+    const postUpdatePromise = database.ref('advisers_posts/' + postid).set(postData);
 
-    // Update the adviser's post list
+    // Fetch current posts and update adviser's post list in parallel
     const adviserData = await getAdviser(adviserid);
     const currentPosts = adviserData.data.posts || [];
     const updatedPosts = [...currentPosts, postid];
-    await database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
+    const adviserUpdatePromise = database.ref('advisers/' + adviserid).update({ posts: updatedPosts });
 
+    // Wait for both database operations to complete
+    await Promise.all([postUpdatePromise, adviserUpdatePromise]);
+
+    // 3. Return the response as soon as all operations are done
     res.status(200).json({ message: 'Images uploaded and post created successfully', postData });
+
   } catch (error) {
     console.error('Error during image upload:', error);
     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
   }
 };
+
 
 
 
