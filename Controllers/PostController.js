@@ -359,7 +359,7 @@ const createPost = async (req, res) => {
 
 
 const createTextPost = async (req, res) => {
-  const { adviserid, message } = req.body;
+  const { adviserid, message, category  } = req.body;
 
   // Validate required fields
   if (!adviserid || !message) {
@@ -378,6 +378,10 @@ const createTextPost = async (req, res) => {
       views: [],
       likes: [],
     };
+
+    if (category) {
+      postData.category = category;
+    }
 
     // Save the post in the 'advisers_posts' node
     await database.ref('advisers_posts/' + postid).set(postData);
@@ -452,7 +456,7 @@ const createTextPost = async (req, res) => {
 
 
 const createImagePost = async (req, res) => {
-  const { adviserid, description } = req.body;
+  const { adviserid, description , category} = req.body;
   const files = req.files; // Array of image files (handled by multer)
 
   if (!adviserid || !files || files.length === 0) {
@@ -486,6 +490,10 @@ const createImagePost = async (req, res) => {
 
     if (description) {
       postData.description = description;
+    }
+
+    if (category) {
+      postData.category = category;
     }
 
     // Save the post data to Firebase Realtime Database
@@ -553,7 +561,7 @@ const createImagePost = async (req, res) => {
 // };
 
 const createVideoPost = async (req, res) => {
-  const { adviserid, videoURLs, durations, description } = req.body;
+  const { adviserid, videoURLs, durations, description, category } = req.body;
 
   // Validate required fields
   if (!adviserid || !videoURLs || !durations || videoURLs.length === 0 || durations.length === 0) {
@@ -586,6 +594,9 @@ const createVideoPost = async (req, res) => {
     // Optionally add a description
     if (description) {
       postData.description = description;
+    }
+    if (category) {
+      postData.category = category;
     }
 
     // Save the post data to the database
