@@ -330,6 +330,31 @@ const getUserDetails = async (req, res) => {
     }
 };
 
+// const getUserByUsername = async (req, res) => {
+//     const key = req.params.key || '';
+
+//     try {
+//         const snapshot = await database.ref('advisers').once('value');
+//         const advisers = snapshot.val();
+
+//         if (!advisers) {
+//             return res.status(404).json({ message: 'No data available' });
+//         }
+
+//         // Filter users: exclude those without a username, and match the key if provided
+//         const filteredAdvisers = Object.entries(advisers)
+//             .filter(([id, adviser]) =>
+//                 adviser.username && adviser.username.toLowerCase().includes(key.toLowerCase())
+//             )
+//             .map(([id, adviser]) => ({ id, ...adviser }));
+
+//         res.status(200).json(filteredAdvisers);
+//     } catch (error) {
+//         console.error('Error fetching advisers:', error);
+//         res.status(500).json({ error: 'Internal server error' });
+//     }
+// };
+
 const getUserByUsername = async (req, res) => {
     const key = req.params.key || '';
 
@@ -341,11 +366,15 @@ const getUserByUsername = async (req, res) => {
             return res.status(404).json({ message: 'No data available' });
         }
 
-        // Filter users: exclude those without a username, and match the key if provided
+        // Filter advisers based on the provided key
         const filteredAdvisers = Object.entries(advisers)
-            .filter(([id, adviser]) =>
-                adviser.username && adviser.username.toLowerCase().includes(key.toLowerCase())
-            )
+            .filter(([id, adviser]) => {
+                const usernameMatch = adviser.username && adviser.username.toLowerCase().includes(key.toLowerCase());
+                const titleMatch = adviser.professional_title && adviser.professional_title.toLowerCase().includes(key.toLowerCase());
+                const bioMatch = adviser.professional_bio && adviser.professional_bio.toLowerCase().includes(key.toLowerCase());
+
+                return usernameMatch || titleMatch || bioMatch;
+            })
             .map(([id, adviser]) => ({ id, ...adviser }));
 
         res.status(200).json(filteredAdvisers);
@@ -354,6 +383,7 @@ const getUserByUsername = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 
 
 
