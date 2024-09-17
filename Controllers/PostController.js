@@ -299,7 +299,7 @@ const getAllHomePostsOfAdviser = async (req, res) => {
 };
 
 const createPost = async (req, res) => {
-  const { adviserid, description, location, videoURL,fileType, duration } = req.body;
+  const { adviserid, description, location, videoURL,fileType, duration,luitags } = req.body;
 
   if (!adviserid || !videoURL || !fileType ||!duration) {
       return res.status(400).json({ error: 'Adviser ID , video file and fileType are required' });
@@ -337,6 +337,11 @@ const createPost = async (req, res) => {
           postData.location = location
         }
 
+        if(luitags)
+          {
+            postData.luitags = luitags
+          }
+
       await database.ref('advisers_posts/' + postid).set(postData);
 
       const adviserData = await getAdviser(adviserid)
@@ -359,7 +364,7 @@ const createPost = async (req, res) => {
 
 
 const createTextPost = async (req, res) => {
-  const { adviserid, message, category  } = req.body;
+  const { adviserid, message, luitags  } = req.body;
 
   // Validate required fields
   if (!adviserid || !message) {
@@ -379,8 +384,8 @@ const createTextPost = async (req, res) => {
       likes: [],
     };
 
-    if (category) {
-      postData.category = category;
+    if (luitags) {
+      postData.luitags = luitags;
     }
 
     // Save the post in the 'advisers_posts' node
@@ -456,7 +461,7 @@ const createTextPost = async (req, res) => {
 
 
 const createImagePost = async (req, res) => {
-  const { adviserid, description , category} = req.body;
+  const { adviserid, description , luitags} = req.body;
   const files = req.files; // Array of image files (handled by multer)
 
   if (!adviserid || !files || files.length === 0) {
@@ -492,8 +497,8 @@ const createImagePost = async (req, res) => {
       postData.description = description;
     }
 
-    if (category) {
-      postData.category = category;
+    if (luitags) {
+      postData.luitags = luitags;
     }
 
     // Save the post data to Firebase Realtime Database
@@ -561,7 +566,7 @@ const createImagePost = async (req, res) => {
 // };
 
 const createVideoPost = async (req, res) => {
-  const { adviserid, videoURLs, durations, description, category } = req.body;
+  const { adviserid, videoURLs, durations, description,luitags } = req.body;
 
   // Validate required fields
   if (!adviserid || !videoURLs || !durations || videoURLs.length === 0 || durations.length === 0) {
@@ -595,8 +600,8 @@ const createVideoPost = async (req, res) => {
     if (description) {
       postData.description = description;
     }
-    if (category) {
-      postData.category = category;
+    if (luitags) {
+      postData.luitags = luitags;
     }
 
     // Save the post data to the database
