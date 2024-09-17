@@ -3,18 +3,30 @@ import { admin, database } from "../firebaseAdmin.js";
 
 
 const sendNotification = async (req, res) => {
-    const { deviceToken, title, body } = req.body;
+    const { deviceToken, title, body, screen } = req.body;
   
     if (!deviceToken || !title || !body) {
       return res.status(400).json({ error: 'Device token, title, and body are required.' });
     }
   
+    // const message = {
+    //   notification: {
+    //     title: title,
+    //     body: body,
+    //   },
+    //   token: deviceToken,
+    // };
+
     const message = {
       notification: {
         title: title,
         body: body,
       },
       token: deviceToken,
+      // Add 'screen' to the data field to be handled by the app
+      data: {
+        screen: screen || '', // Pass screen value if present, otherwise an empty string
+      },
     };
   
     try {
@@ -98,7 +110,7 @@ const sendNotification = async (req, res) => {
   // };
 
   const sendNotificationToAllCreators = async (req, res) => {
-    const { title, body, latest_version } = req.body;
+    const { title, body, latest_version , screen} = req.body;
   
     if (!title || !body) {
       return res.status(400).json({ error: 'Title and body are required.' });
@@ -136,6 +148,10 @@ const sendNotification = async (req, res) => {
             body: body,
           },
           token: token,
+          
+          data: {
+            screen: screen || '', // Pass screen value if present, otherwise an empty string
+          },
         };
   
         // If latest_version exists, add it to the data field
