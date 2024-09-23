@@ -227,11 +227,11 @@ const getContestLeaderboard = async (req, res) => {
     }
 
     try {
-        const postsSnapshot = await database.ref('advisers_posts').orderByChild('contestid').equalTo(contestid).once('value');
+        const postsSnapshot = await database.ref('advisers_posts').once('value');
         const postsData = postsSnapshot.val();
 
         if (!postsData) {
-            return res.status(404).json({ error: 'No posts found for this contest' });
+            return res.status(200).json({ message: 'Leaderboard fetched successfully', leaderboard: [] });
         }
 
         let leaderboard = [];
@@ -239,36 +239,38 @@ const getContestLeaderboard = async (req, res) => {
         for (const postid in postsData) {
             const post = postsData[postid];
 
-            const adviserSnapshot = await database.ref('advisers/' + post.adviserid).once('value');
-            const adviserData = adviserSnapshot.val();
+            if (post.contestid === contestid) {
+                const adviserSnapshot = await database.ref('advisers/' + post.adviserid).once('value');
+                const adviserData = adviserSnapshot.val();
 
-            if (adviserData) {
-                leaderboard.push({
-                    postid: postid,
-                    adviserid: post.adviserid,
-                    name: adviserData.name,
-                    professional_title: adviserData.professional_title,
-                    post_file: post.post_file,
-                    likes: post.likes, 
-                    description: post.description || '',
-                    location: post.location || '',
-                    luitags: post.luitags || [],
-                    dop: post.dop,
-                    video_duration: post.video_duration,
-                    views: post.views,
-                });
+                if (adviserData) {
+                    leaderboard.push({
+                        postid: postid,
+                        adviserid: post.adviserid,
+                        name: adviserData.name,
+                        professional_title: adviserData.professional_title,
+                        post_file: post.post_file,
+                        likes: post.likes,
+                        description: post.description || '',
+                        location: post.location || '',
+                        luitags: post.luitags || [],
+                        dop: post.dop,
+                        video_duration: post.video_duration,
+                        views: post.views,
+                    });
+                }
             }
         }
 
         leaderboard.sort((a, b) => b.likes.length - a.likes.length);
 
         res.status(200).json({ message: 'Leaderboard fetched successfully', leaderboard });
-
     } catch (error) {
         console.error('Error fetching leaderboard:', error);
         res.status(500).json({ error: 'An error occurred while fetching the leaderboard.' });
     }
 };
+
 
 
 
