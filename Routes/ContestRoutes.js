@@ -7,6 +7,6 @@ const router = new Router();
 router.route('/getongoingcontest').get(getOngoingContest)
 router.route('/createcontest').post(createContest)
 router.route('/uploadcontestreel').post(createContestReel)
-router.route('/getleaderboard').post(getContestLeaderboard)
+router.route('/getleaderboard/:contestid').get(getContestLeaderboard)
 
 export default router

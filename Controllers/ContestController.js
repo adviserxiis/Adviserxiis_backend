@@ -220,7 +220,7 @@ const createContestReel = async (req, res) => {
 
 
 const getContestLeaderboard = async (req, res) => {
-    const { contestid } = req.body;
+    const { contestid } = req.params;
 
     if (!contestid) {
         return res.status(400).json({ error: 'Contest ID is required' });
