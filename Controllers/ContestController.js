@@ -6,6 +6,21 @@ import { ref as sRef, uploadBytesResumable } from 'firebase/storage';
 import { getDownloadURL, getStorage, uploadBytes } from 'firebase/storage'
 
 
+async function getAdviser(adviserId) {
+    try {
+      const snapshot = await database.ref(`advisers/${adviserId}`).once('value');
+      if (snapshot.exists()) {
+        return { data: snapshot.val(), id: adviserId };
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching adviser details:', error);
+      return null;
+    }
+  }
+
+
 const createContest = async (req, res) => {
 
     const { name, description, last_date, prize_money } = req.body;
