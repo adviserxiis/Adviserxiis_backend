@@ -253,8 +253,7 @@ const getContestLeaderboard = async (req, res) => {
 
         for (const postid in postsData) {
             const post = postsData[postid];
-
-            if (post.contestid === contestid) {
+            if (post.contestid == contestid) {
                 const adviserSnapshot = await database.ref('advisers/' + post.adviserid).once('value');
                 const adviserData = adviserSnapshot.val();
 
