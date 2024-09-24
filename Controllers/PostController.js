@@ -128,7 +128,7 @@ const getAllPostsForHome = async (req, res) => {
       // Filter posts with file_type = "video"
       snapshot.forEach(childSnapshot => {
         const postData = childSnapshot.val();
-        if (postData.file_type !== "video") {
+        if (postData.file_type !== "video" && postData.file_type !== "contest_video") {
           posts.push({ data: postData, id: childSnapshot.key });
         }
         

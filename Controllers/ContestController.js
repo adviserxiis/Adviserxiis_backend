@@ -174,7 +174,7 @@ const createContestReel = async (req, res) => {
             adviserid: adviserid,
             contestid: contestid,
             post_file: videoURL,
-            file_type: 'contest_reel',
+            file_type: 'contest_video',
             video_duration: duration,
             dop: new Date().toString(),
             views: [],
