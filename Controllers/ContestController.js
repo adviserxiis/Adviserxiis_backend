@@ -263,6 +263,7 @@ const getContestLeaderboard = async (req, res) => {
                         adviserid: post.adviserid,
                         name: adviserData.username,
                         professional_title: adviserData.professional_title,
+                        profile_photo:adviserData.profile_photo,
                         post_file: post.post_file,
                         likes: post.likes,
                         description: post.description || '',
