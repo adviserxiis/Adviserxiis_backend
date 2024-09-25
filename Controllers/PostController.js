@@ -86,7 +86,7 @@ const getAllReelsWithAdviser = async (req, res) => {
       // Filter posts with file_type = "video"
       snapshot.forEach(childSnapshot => {
         const postData = childSnapshot.val();
-        if (postData.file_type === "video" && postData.file_type === 'contest_video') {
+        if (postData.file_type === "video" || postData.file_type === 'contest_video') {
           posts.push({ data: postData, id: childSnapshot.key });
         }
       });
@@ -228,7 +228,7 @@ const getAllPostsOfAdviser = async (req, res) => {
       const posts = [];
       snapshot.forEach(childSnapshot => {
         const postData = childSnapshot.val();
-        if ( postData.adviserid === adviserId && postData.file_type === "video" && postData.file_type === 'contest_video') {
+        if ( postData.adviserid === adviserId && (postData.file_type === "video" || postData.file_type === 'contest_video' )) {
           posts.push({ data: postData, id: childSnapshot.key });
         }
       });
