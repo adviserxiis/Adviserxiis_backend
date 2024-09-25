@@ -261,7 +261,7 @@ const getContestLeaderboard = async (req, res) => {
                     leaderboard.push({
                         postid: postid,
                         adviserid: post.adviserid,
-                        name: adviserData.name,
+                        name: adviserData.username,
                         professional_title: adviserData.professional_title,
                         post_file: post.post_file,
                         likes: post.likes,
@@ -276,7 +276,7 @@ const getContestLeaderboard = async (req, res) => {
             }
         }
 
-        leaderboard.sort((a, b) => b.likes.length - a.likes.length);
+        leaderboard.sort((a, b) => b.likes?.length - a.likes?.length);
 
         res.status(200).json({ message: 'Leaderboard fetched successfully', leaderboard });
     } catch (error) {
