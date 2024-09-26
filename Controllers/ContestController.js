@@ -234,6 +234,58 @@ const createContestReel = async (req, res) => {
 };
 
 
+// const getContestLeaderboard = async (req, res) => {
+//     const { contestid } = req.params;
+
+//     if (!contestid) {
+//         return res.status(400).json({ error: 'Contest ID is required' });
+//     }
+
+//     try {
+//         const postsSnapshot = await database.ref('advisers_posts').once('value');
+//         const postsData = postsSnapshot.val();
+
+//         if (!postsData) {
+//             return res.status(200).json({ message: 'Leaderboard fetched successfully', leaderboard: [] });
+//         }
+
+//         let leaderboard = [];
+
+//         for (const postid in postsData) {
+//             const post = postsData[postid];
+//             if (post.contestid == contestid) {
+//                 const adviserSnapshot = await database.ref('advisers/' + post.adviserid).once('value');
+//                 const adviserData = adviserSnapshot.val();
+
+//                 if (adviserData) {
+//                     leaderboard.push({
+//                         postid: postid,
+//                         adviserid: post.adviserid,
+//                         name: adviserData.username,
+//                         professional_title: adviserData.professional_title,
+//                         profile_photo:adviserData.profile_photo,
+//                         post_file: post.post_file,
+//                         likes: post.likes,
+//                         description: post.description || '',
+//                         location: post.location || '',
+//                         luitags: post.luitags || [],
+//                         dop: post.dop,
+//                         video_duration: post.video_duration,
+//                         views: post.views,
+//                     });
+//                 }
+//             }
+//         }
+
+//         leaderboard.sort((a, b) => b.likes?.length - a.likes?.length);
+
+//         res.status(200).json({ message: 'Leaderboard fetched successfully', leaderboard });
+//     } catch (error) {
+//         console.error('Error fetching leaderboard:', error);
+//         res.status(500).json({ error: 'An error occurred while fetching the leaderboard.' });
+//     }
+// };
+
 const getContestLeaderboard = async (req, res) => {
     const { contestid } = req.params;
 
@@ -263,9 +315,10 @@ const getContestLeaderboard = async (req, res) => {
                         adviserid: post.adviserid,
                         name: adviserData.username,
                         professional_title: adviserData.professional_title,
-                        profile_photo:adviserData.profile_photo,
+                        profile_photo: adviserData.profile_photo,
                         post_file: post.post_file,
-                        likes: post.likes,
+                        likes: post.likes || [], // Send likes array as it is
+                        likeCount: post.likes ? post.likes.length : 0, // Separate field for sorting
                         description: post.description || '',
                         location: post.location || '',
                         luitags: post.luitags || [],
@@ -277,7 +330,8 @@ const getContestLeaderboard = async (req, res) => {
             }
         }
 
-        leaderboard.sort((a, b) => b.likes?.length - a.likes?.length);
+        // Sort based on the likeCount (highest first)
+        leaderboard.sort((a, b) => b.likeCount - a.likeCount);
 
         res.status(200).json({ message: 'Leaderboard fetched successfully', leaderboard });
     } catch (error) {
@@ -285,6 +339,7 @@ const getContestLeaderboard = async (req, res) => {
         res.status(500).json({ error: 'An error occurred while fetching the leaderboard.' });
     }
 };
+
 
 
 
