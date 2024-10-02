@@ -15,6 +15,7 @@ import testRoutes from './Routes/TestRoutes.js'
 import creatorRoutes from './Routes/CreatorRoutes.js'
 import notificationRoutes from './Routes/NotificationRoutes.js'
 import contestRoutes from './Routes/ContestRoutes.js'
+import serviceRoutes from './Routes/ServiceRoutes.js'
 
 const PORT = process.env.PORT || 8000
 
@@ -103,6 +104,8 @@ app.use('/test',testRoutes)
 app.use('/notification',notificationRoutes)
 
 app.use('/contest',contestRoutes)
+
+app.use('/service',serviceRoutes)
 
 
 app.listen(PORT, () =>{
