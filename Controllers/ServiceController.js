@@ -27,6 +27,7 @@ async function getAdviser(adviserid) {
   
     try {
       const serviceid = uuidv1(); // Generate unique service ID if not provided
+      const date = new Date().toString();
   
       // Create service data object
       const serviceData = {
@@ -35,6 +36,7 @@ async function getAdviser(adviserid) {
         about_service,
         duration,
         price,
+        created_at:date,
         isPublished: isPublished || false,
       };
   
