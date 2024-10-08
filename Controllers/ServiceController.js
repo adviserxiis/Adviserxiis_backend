@@ -18,7 +18,7 @@ async function getAdviser(adviserid) {
 
 
   const createService = async (req, res) => {
-    const { adviserid, service_name, about_service, duration, price, isPublished } = req.body;
+    const { adviserid, service_name, about_service, duration, price, isPublished} = req.body;
   
     // Validate required fields
     if (!adviserid || !service_name || !about_service || !duration || !price ) {
@@ -37,7 +37,7 @@ async function getAdviser(adviserid) {
         duration,
         price,
         created_at:date,
-        isPublished: isPublished || false,
+        // isPublished: isPublished || false,
       };
   
       // Save the service data to the database
@@ -50,11 +50,11 @@ async function getAdviser(adviserid) {
       await database.ref('advisers/' + adviserid).update({ services: updatedServices });
   
       // If the service is published, update the published_services list
-      if (isPublished) {
-        const publishedServices = adviserData.published_services || [];
-        const updatedPublishedServices = [...publishedServices, serviceid];
-        await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
-      }
+      // if (isPublished) {
+      //   const publishedServices = adviserData.published_services || [];
+      //   const updatedPublishedServices = [...publishedServices, serviceid];
+      //   await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
+      // }
   
       res.status(200).json({ message: 'Service created successfully', serviceData });
     } catch (error) {
@@ -103,7 +103,71 @@ async function getAdviser(adviserid) {
     }
   };
 
+
+  const editService = async (req, res) => {
+    const { serviceid, adviserid, service_name, about_service, duration, price, isPublished } = req.body;
+  
+    // Validate required fields
+    if (!serviceid || !adviserid) {
+      return res.status(400).json({ error: 'Service ID and Adviser ID are required' });
+    }
+  
+    try {
+      // Fetch existing service data
+      const serviceRef = database.ref('advisers_service/' + serviceid);
+      const serviceSnapshot = await serviceRef.once('value');
+  
+      if (!serviceSnapshot.exists()) {
+        return res.status(404).json({ error: 'Service not found' });
+      }
+  
+      const serviceData = serviceSnapshot.val();
+  
+      // Check if the adviser matches the service
+      if (serviceData.adviserid !== adviserid) {
+        return res.status(403).json({ error: 'You are not authorized to edit this service' });
+      }
+  
+      // Update the service data with new values
+      const updatedServiceData = {
+        ...serviceData,
+        service_name: service_name || serviceData.service_name,
+        about_service: about_service || serviceData.about_service,
+        duration: duration || serviceData.duration,
+        price: price || serviceData.price,
+        // isPublished: typeof isPublished === 'boolean' ? isPublished : serviceData.isPublished,
+        // updated_at: new Date().toString()
+      };
+  
+      // Save the updated service data to the database
+      await serviceRef.update(updatedServiceData);
+  
+      // Update the adviser's published_services list if isPublished is changed
+      // const adviserData = await getAdviser(adviserid);
+  
+    
+      // if (isPublished && !serviceData.isPublished) {
+      //   const publishedServices = adviserData.published_services || [];
+      //   const updatedPublishedServices = [...publishedServices, serviceid];
+      //   await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
+      // }
+  
+      // If the service is unpublished and was published before, remove it from the published_services list
+      // if (!isPublished && serviceData.isPublished) {
+      //   const publishedServices = adviserData.published_services || [];
+      //   const updatedPublishedServices = publishedServices.filter(id => id !== serviceid);
+      //   await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
+      // }
+  
+      res.status(200).json({ message: 'Service updated successfully', updatedServiceData });
+    } catch (error) {
+      console.error('Error during service update:', error);
+      res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+    }
+  };
+
 export {
     createService,
-    getAllServicesByAdviser
+    getAllServicesByAdviser,
+    editService
 }
