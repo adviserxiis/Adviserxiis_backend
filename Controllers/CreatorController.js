@@ -599,6 +599,48 @@ const signinwithGoogle = async (req, res) =>{
         res.status(500).json({ error: 'Something went wrong. Please try again later.' });
     }
 }
+
+const saveAvailability = async (req, res) => {
+    try {
+      // Extract adviser ID from request body or authentication context
+      const { adviserid, availability } = req.body;
+  
+      if (!adviserid || !availability || !Array.isArray(availability)) {
+        return res.status(400).json({ message: 'Invalid data provided' });
+      }
+  
+      // Initialize Firebase Realtime Database instance
+
+  
+      // Validate the availability structure and format
+      const validDaysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  
+      const formattedAvailability = availability.map((dayObj) => {
+        const { day, startTime, endTime } = dayObj;
+  
+        // Ensure valid day and time format
+        if (!validDaysOfWeek.includes(day.toLowerCase()) || !startTime || !endTime) {
+          throw new Error('Invalid day or time format');
+        }
+  
+        return {
+          day: day.toLowerCase(),
+          timing: `${startTime} - ${endTime}`,
+        };
+      });
+  
+      // Save the formatted availability in Firebase under the adviser's node
+      const adviserRef = database.ref(`advisers/${adviserid}`);
+      await adviserRef.update({
+        availability: formattedAvailability,
+      });
+  
+      return res.status(200).json({ message: 'Availability schedule saved successfully!' });
+    } catch (error) {
+      console.error('Error saving availability:', error);
+      return res.status(500).json({ message: 'Failed to save availability schedule', error: error.message });
+    }
+  };
   
 
 
@@ -613,5 +655,6 @@ export {
     resetPassword,
     followCreator,
     unfollowCreator,
-    signinwithGoogle
+    signinwithGoogle,
+    saveAvailability
 }

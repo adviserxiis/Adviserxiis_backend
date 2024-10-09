@@ -166,8 +166,43 @@ async function getAdviser(adviserid) {
     }
   };
 
+
+  const savePaymentDetails = async (req, res) => {
+    const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId } = req.body;
+  
+    if (!serviceid || !userid || !adviserid || !scheduled_date || !scheduled_time || !paymentId) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+  
+    try {
+      // Get the current date for the purchase
+      const purchased_date = new Date().toISOString();
+  
+      // Construct the payment details object
+      const paymentDetails = {
+        serviceid,
+        userid,
+        adviserid,
+        scheduled_date,
+        scheduled_time,
+        purchased_date
+      };
+  
+      // Save payment details in Firebase Realtime Database under the payments node with the paymentId as key
+      await database.ref('payments/' + paymentId).set(paymentDetails);
+  
+      // Return success response
+      return res.status(200).json({ message: 'Payment details saved successfully' });
+  
+    } catch (error) {
+      console.error('Error saving payment details:', error);
+      return res.status(500).json({ message: 'Failed to save payment details', error: error.message });
+    }
+  };
+
 export {
     createService,
     getAllServicesByAdviser,
-    editService
+    editService,
+    savePaymentDetails
 }
