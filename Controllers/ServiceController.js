@@ -1,6 +1,7 @@
 import { database } from '../firebaseAdmin.js'
 import bcrypt from 'bcryptjs'
 import { v1 as uuidv1 } from 'uuid';
+import moment from 'moment';
 import multer from 'multer';
 import { ref as sRef, uploadBytesResumable } from 'firebase/storage';
 import { getDownloadURL, getStorage, uploadBytes } from 'firebase/storage'
@@ -15,6 +16,9 @@ async function getAdviser(adviserid) {
       throw new Error("Adviser not found");
     }
   }
+
+
+
 
 
   const createService = async (req, res) => {
@@ -200,9 +204,153 @@ async function getAdviser(adviserid) {
     }
   };
 
+
+
+
+// Function to generate the next 30 days in the given format
+function generateNext30Days() {
+  const dates = [];
+  const today = new Date();
+
+  for (let i = 0; i < 30; i++) {
+    const currentDay = new Date(today);
+    currentDay.setDate(today.getDate() + i);
+
+    const options = { day: '2-digit', month: 'short', weekday: 'short' };
+    const formattedDate = currentDay.toLocaleDateString('en-GB', options); // E.g., '10 Oct Thu'
+    const dayName = currentDay.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase(); // Get full day name (monday, tuesday, etc.)
+
+    dates.push({ date: formattedDate, dayName });
+  }
+
+  return dates;
+}
+
+// Controller to get the upcoming 20 days' availability for an adviser
+async function getAdviserAvailability(req, res) {
+  const { adviserid } = req.params;
+
+  try {
+    // Fetch adviser data
+    const adviserData = await getAdviser(adviserid);
+
+    if (!adviserData || !adviserData.availability) {
+      return res.status(404).json({ error: 'Adviser not found or availability not set.' });
+    }
+
+    // Map adviser's availability to a day-timing object
+    const adviserAvailability = adviserData.availability.reduce((acc, item) => {
+      acc[item.day.toLowerCase()] = item.timing; // e.g., { monday: "9:00 AM - 5:00 PM", tuesday: "10:00 AM - 6:00 PM" }
+      return acc;
+    }, {});
+
+    // Generate upcoming 30 days
+    const upcomingDays = generateNext30Days();
+
+    // Filter and map upcoming days based on adviser's availability with two date formats
+    const availableDays = upcomingDays
+      .filter(day => adviserAvailability[day.dayName]) // Match day names
+      .map(day => ({
+        dateFormatted: day.date, // e.g., '10 Oct Thu'
+        dateISO: moment(day.date, 'DD MMM ddd').format('YYYY-MM-DD'), // e.g., '2024-10-10' (ISO format)
+        timing: adviserAvailability[day.dayName] // e.g., '9:00 AM - 5:00 PM'
+      }));
+
+    res.status(200).json({ availability: availableDays });
+  } catch (error) {
+    console.error('Error fetching adviser availability:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+
+function generateTimeSlots(startTime, endTime, duration) {
+  const slots = [];
+  let current = moment(startTime, 'h:mm A');
+  const end = moment(endTime, 'h:mm A');
+
+  while (current < end) {
+    const slotStart = current.format('h:mm A');
+    current.add(duration, 'minutes');
+    const slotEnd = current.format('h:mm A');
+    slots.push({
+      startTime: slotStart,
+      endTime: slotEnd,
+    });
+  }
+
+  return slots;
+}
+
+// Function to check if two time ranges overlap
+function isOverlapping(existingStart, existingEnd, slotStart, slotEnd) {
+  const existingStartTime = moment(existingStart, 'h:mm A');
+  const existingEndTime = moment(existingEnd, 'h:mm A');
+  const slotStartTime = moment(slotStart, 'h:mm A');
+  const slotEndTime = moment(slotEnd, 'h:mm A');
+
+  // Return true if there is any overlap between the existing slot and the new slot
+  return slotStartTime.isBefore(existingEndTime) && slotEndTime.isAfter(existingStartTime);
+}
+
+async function getAvailableTimeSlots(req, res) {
+  const { adviserid, scheduledDate, timing, duration } = req.body; // timing: "9:00 AM - 5:00 PM"
+
+  try {
+    // Split the provided timing into start and end time
+    const [startTime, endTime] = timing.split(' - '); // Example: "9:00 AM - 5:00 PM"
+
+    // Generate time slots based on the provided duration
+    const timeSlots = generateTimeSlots(startTime, endTime, duration);
+
+    // Fetch existing bookings for the adviser on the selected date
+    const snapshot = await database
+      .ref('payments')
+      .orderByChild('adviserid')
+      .equalTo(adviserid)
+      .once('value');
+
+    const existingBookings = [];
+
+    if (snapshot.exists()) {
+      snapshot.forEach((childSnapshot) => {
+        const payment = childSnapshot.val();
+        if (payment.scheduled_date === scheduledDate) {
+          // Add the start and end times of the booked slots to the existingBookings array
+          const [existingStart, existingEnd] = payment.scheduled_time.split(' - ');
+          existingBookings.push({ existingStart, existingEnd });
+        }
+      });
+    }
+
+    const availableSlots = timeSlots.map((slot) => {
+      // Check if the current slot overlaps with any existing booking
+      const isBooked = existingBookings.some((booking) =>
+        isOverlapping(booking.existingStart, booking.existingEnd, slot.startTime, slot.endTime)
+      );
+
+      return {
+        slot: `${slot.startTime} - ${slot.endTime}`, // e.g., "9:00 AM - 10:00 AM"
+        available: !isBooked ? 'yes' : 'no', // 'yes' for available, 'no' for booked
+      };
+    });
+
+    // Return the available slots with the booked flag
+    res.status(200).json({
+      adviserid,
+      scheduledDate,
+      availableSlots,
+    });
+  } catch (error) {
+    console.error('Error generating available time slots:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
 export {
     createService,
     getAllServicesByAdviser,
     editService,
-    savePaymentDetails
+    savePaymentDetails,
+    getAdviserAvailability,
+    getAvailableTimeSlots
 }
