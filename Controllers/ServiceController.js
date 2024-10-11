@@ -173,13 +173,7 @@ async function getAdviser(adviserid) {
 
   const savePaymentDetails = async (req, res) => {
     const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId ,meetingid} = req.body;
-    console.log("hii", serviceid)
-    console.log("hii", userid)
-    console.log("hii", adviserid)
-    console.log("hii", scheduled_date)
-    console.log("hii", scheduled_time)
-    console.log("hii", paymentId)
-    console.log("hii", meetingid)
+
 
   
     if (!serviceid || !userid || !adviserid || !scheduled_date || !scheduled_time || !paymentId || !meetingid) {
