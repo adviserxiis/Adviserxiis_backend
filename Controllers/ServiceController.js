@@ -172,9 +172,9 @@ async function getAdviser(adviserid) {
 
 
   const savePaymentDetails = async (req, res) => {
-    const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId } = req.body;
+    const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId ,meetingid} = req.body;
   
-    if (!serviceid || !userid || !adviserid || !scheduled_date || !scheduled_time || !paymentId) {
+    if (!serviceid || !userid || !adviserid || !scheduled_date || !scheduled_time || !paymentId || meetingid) {
       return res.status(400).json({ message: 'All fields are required' });
     }
   
@@ -189,6 +189,7 @@ async function getAdviser(adviserid) {
         adviserid,
         scheduled_date,
         scheduled_time,
+        meetingid,
         purchased_date
       };
   

@@ -9,7 +9,6 @@ router.route('/getallservicesofadviser/:adviserid').get(getAllServicesByAdviser)
 router.route('/editservice').post(editService)
 router.route('/getavailabledays/:adviserid').get(getAdviserAvailability)
 router.route('/getavailabletimeslots').post(getAvailableTimeSlots)
-
 router.route('/bookorder').post(savePaymentDetails)
 
 
