@@ -159,7 +159,7 @@ const sendConfirmationMail =  async(req, res) =>{
             </div>
             <div class="footer">
               <p>Thank you,<br>
-              Adviserxiis</p>
+              Luink.ai</p>
             </div>
           </div>
         </body>
@@ -204,7 +204,7 @@ const sendConfirmationMail =  async(req, res) =>{
           </div>
           <div class="footer">
             <p>Thank you,<br>
-            Adviserxiis</p>
+            Luink.ai</p>
           </div>
         </div>
       </body>
