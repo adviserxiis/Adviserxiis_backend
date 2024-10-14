@@ -110,7 +110,8 @@ const sendConfirmationMail =  async(req, res) =>{
         },
       });
 
-      const user = await getUser(userid);
+      // const user = await getUser(userid);
+      const user = await getAdviser(userid);
       const adviser = await getAdviser(adviserid);
       const service = await getService(serviceid)
       const payment = await getPayement(paymentid)
@@ -153,7 +154,7 @@ const sendConfirmationMail =  async(req, res) =>{
               <p>Your appointment for ${service.service_name} with ${adviser.username} has been successfully scheduled.</p>
               <p><strong>Date:</strong> ${convertDateFormat(payment.scheduled_date)}<br>
               <strong>Time:</strong> ${payment.scheduled_time}</p>
-              <p><strong>Your meeting link:</strong> <a href="${meetingLink}">${meetingLink}</a></p>
+    
               <p>Please make sure to be available at the scheduled time.</p>
             </div>
             <div class="footer">
@@ -164,6 +165,8 @@ const sendConfirmationMail =  async(req, res) =>{
         </body>
         </html>
       `;
+
+      //          <p><strong>Your meeting link:</strong> <a href="${meetingLink}">${meetingLink}</a></p>
 
       const htmlTemplateAdviser = `
       <!DOCTYPE html>
@@ -196,7 +199,7 @@ const sendConfirmationMail =  async(req, res) =>{
             <p>Your meeting for ${service.service_name} with ${user.name} has been successfully scheduled.</p>
             <p><strong>Date:</strong> ${convertDateFormat(payment.scheduled_date)}<br>
             <strong>Time:</strong> ${payment.scheduled_time}</p>
-            <p><strong>Your meeting link:</strong> <a href="${meetingLink}">${meetingLink}</a></p>
+            
             <p>Please make sure to be available at the scheduled time.</p>
           </div>
           <div class="footer">
@@ -207,6 +210,8 @@ const sendConfirmationMail =  async(req, res) =>{
       </body>
       </html>
     `;
+
+    //<p><strong>Your meeting link:</strong> <a href="${meetingLink}">${meetingLink}</a></p>
 
 
         const info1 = await transporter.sendMail({
