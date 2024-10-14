@@ -196,7 +196,7 @@ const sendConfirmationMail =  async(req, res) =>{
         <div class="container">
           <p>Hi ${adviser.username},</p>
           <div class="content">
-            <p>Your meeting for ${service.service_name} with ${user.name} has been successfully scheduled.</p>
+            <p>Your meeting for ${service.service_name} with ${user.username} has been successfully scheduled.</p>
             <p><strong>Date:</strong> ${convertDateFormat(payment.scheduled_date)}<br>
             <strong>Time:</strong> ${payment.scheduled_time}</p>
             
