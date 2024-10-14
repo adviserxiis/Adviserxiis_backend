@@ -349,11 +349,119 @@ async function getAvailableTimeSlots(req, res) {
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+
+
+const getBookingsOfUser = async (req, res) => {
+  const { userid } = req.params;
+
+  if (!userid) {
+    return res.status(400).json({ message: 'User ID is required' });
+  }
+
+  try {
+    // Fetch all bookings where the userid or adviserid matches the provided userid
+    const snapshot = await database
+      .ref('payments')
+      .orderByChild('userid')
+      .equalTo(userid)
+      .once('value');
+      
+    const adviserSnapshot = await database
+      .ref('payments')
+      .orderByChild('adviserid')
+      .equalTo(userid)
+      .once('value');
+
+    // Combine both user and adviser bookings
+    const bookingsData = { ...snapshot.val(), ...adviserSnapshot.val() };
+
+    if (!bookingsData) {
+      return res.status(404).json({ message: 'No bookings found for this user' });
+    }
+
+    let bookings = Object.keys(bookingsData).map((key) => ({
+      paymentId: key,
+      ...bookingsData[key],
+    }));
+
+    // Function to convert '9:00 Am - 10:00 Am' time slot into Date object for sorting
+    const convertTimeSlotToDate = (dateStr, timeStr) => {
+      const [startTime] = timeStr.split(' - ');
+      return new Date(`${dateStr} ${startTime}`);
+    };
+
+    // Sort the bookings by scheduled_date and scheduled_time
+    bookings.sort((a, b) => {
+      const dateA = new Date(a.scheduled_date);
+      const dateB = new Date(b.scheduled_date);
+      if (dateA < dateB) return -1;
+      if (dateA > dateB) return 1;
+
+      // If dates are the same, sort by time
+      const timeA = convertTimeSlotToDate(a.scheduled_date, a.scheduled_time);
+      const timeB = convertTimeSlotToDate(b.scheduled_date, b.scheduled_time);
+      return timeA - timeB;
+    });
+
+    // Populate service, adviser, and user details
+    for (let booking of bookings) {
+      // Populate service details
+      const serviceSnapshot = await database
+        .ref(`advisers_service/${booking.serviceid}`)
+        .once('value');
+      booking.serviceDetails = serviceSnapshot.val();
+
+      // Populate limited adviser details, with checks for null/undefined
+      const adviserSnapshot = await database
+        .ref(`advisers/${booking.adviserid}`)
+        .once('value');
+      const adviserData = adviserSnapshot.val();
+      
+      if (adviserData) {
+        booking.adviserDetails = {
+          name: adviserData.username || 'N/A', // Fallback to 'N/A' if name is missing
+          professional_title: adviserData.professional_title || 'N/A',
+          profile_picture: adviserData.profile_photo || 'N/A', // Include necessary details
+        };
+      } else {
+        booking.adviserDetails = { name: 'N/A', professional_title: 'N/A', profile_picture: 'N/A', username: 'N/A' };
+      }
+
+      // Populate limited user details, with checks for null/undefined
+      const userSnapshot = await database
+        .ref(`advisers/${booking.userid}`)
+        .once('value');
+      const userData = userSnapshot.val();
+      
+      if (userData) {
+        booking.userDetails = {
+          name: userData.username || 'N/A', // Fallback to 'N/A' if name is missing
+          email: userData.email || 'N/A',
+        };
+      } else {
+        booking.userDetails = { name: 'N/A', email: 'N/A', username: 'N/A' };
+      }
+    }
+
+    // Return the sorted and populated bookings with reduced load
+    return res.status(200).json({ bookings });
+  } catch (error) {
+    console.error('Error fetching bookings:', error);
+    return res.status(500).json({ message: 'Failed to fetch bookings', error: error.message });
+  }
+};
+
+
+
+
+
 export {
     createService,
     getAllServicesByAdviser,
     editService,
     savePaymentDetails,
     getAdviserAvailability,
-    getAvailableTimeSlots
+    getAvailableTimeSlots,
+    getBookingsOfUser
 }
