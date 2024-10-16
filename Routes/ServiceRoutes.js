@@ -1,10 +1,11 @@
 import { Router } from "express"
-import { createService, editService, getAdviserAvailability, getAllServicesByAdviser, getAvailableTimeSlots, getBookingsOfUser, savePaymentDetails } from "../Controllers/ServiceController.js";
+import { createService, deleteService, editService, getAdviserAvailability, getAllServicesByAdviser, getAvailableTimeSlots, getBookingsOfUser, savePaymentDetails } from "../Controllers/ServiceController.js";
 
 
 const router = new Router();
 
 router.route('/createservice').post(createService)
+router.route('/deleteservice').post(deleteService)
 router.route('/getallservicesofadviser/:adviserid').get(getAllServicesByAdviser)
 router.route('/editservice').post(editService)
 router.route('/getavailabledays/:adviserid').get(getAdviserAvailability)

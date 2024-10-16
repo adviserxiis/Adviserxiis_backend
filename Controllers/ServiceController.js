@@ -453,6 +453,51 @@ const getBookingsOfUser = async (req, res) => {
 };
 
 
+const deleteService = async (req, res) => {
+  const { serviceid, adviserid } = req.body;
+
+  // Validate required fields
+  if (!serviceid || !adviserid) {
+    return res.status(400).json({ error: 'Both serviceid and adviserid are required' });
+  }
+
+  try {
+    // Check if the service exists
+    const serviceRef = database.ref('advisers_service/' + serviceid);
+    const serviceSnapshot = await serviceRef.once('value');
+    
+    if (!serviceSnapshot.exists()) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    // Delete the service from the 'advisers_service' node
+    await serviceRef.remove();
+
+    // Update the adviser's service list
+    const adviserData = await getAdviser(adviserid);
+    const currentServices = adviserData.services || [];
+
+    if (!currentServices.includes(serviceid)) {
+      return res.status(404).json({ error: 'Service not associated with this adviser' });
+    }
+
+    // Remove the service from the adviser's services list
+    const updatedServices = currentServices.filter(id => id !== serviceid);
+    await database.ref('advisers/' + adviserid).update({ services: updatedServices });
+
+    // Optional: Remove from published services if it exists in that list
+    // const publishedServices = adviserData.published_services || [];
+    // const updatedPublishedServices = publishedServices.filter(id => id !== serviceid);
+    // await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
+
+    res.status(200).json({ message: 'Service deleted successfully' });
+  } catch (error) {
+    console.error('Error during service deletion:', error);
+    res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+  }
+};
+
+
 
 
 
@@ -463,5 +508,6 @@ export {
     savePaymentDetails,
     getAdviserAvailability,
     getAvailableTimeSlots,
-    getBookingsOfUser
+    getBookingsOfUser,
+    deleteService
 }
