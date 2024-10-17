@@ -41,7 +41,7 @@ async function getAdviser(adviserid) {
         duration,
         price,
         created_at:date,
-        // isPublished: isPublished || false,
+        isPublished: true,
       };
   
       // Save the service data to the database
@@ -54,11 +54,11 @@ async function getAdviser(adviserid) {
       await database.ref('advisers/' + adviserid).update({ services: updatedServices });
   
       // If the service is published, update the published_services list
-      // if (isPublished) {
-      //   const publishedServices = adviserData.published_services || [];
-      //   const updatedPublishedServices = [...publishedServices, serviceid];
-      //   await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
-      // }
+
+        const publishedServices = adviserData.published_services || [];
+        const updatedPublishedServices = [...publishedServices, serviceid];
+        await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
+      
   
       res.status(200).json({ message: 'Service created successfully', serviceData });
     } catch (error) {
@@ -67,6 +67,45 @@ async function getAdviser(adviserid) {
     }
   };
 
+
+  // const getAllServicesByAdviser = async (req, res) => {
+  //   const { adviserid } = req.params;
+  
+  //   // Validate adviser ID
+  //   if (!adviserid) {
+  //     return res.status(400).json({ error: 'Adviser ID is required' });
+  //   }
+  
+  //   try {
+  
+  //     // Fetch all services from advisers_service node
+  //     const servicesSnapshot = await database.ref('advisers_service').get();
+  
+  //     if (!servicesSnapshot.exists()) {
+  //       return res.status(404).json({ error: 'No services found' });
+  //     }
+  
+  //     const servicesData = servicesSnapshot.val();
+  //     const adviserServices = [];
+  
+  //     // Loop through all services and check for matching adviserid
+  //     for (const serviceid in servicesData) {
+  //       if (servicesData[serviceid].adviserid === adviserid) {
+  //         adviserServices.push({ serviceid, ...servicesData[serviceid] });
+  //       }
+  //     }
+  
+  //     // Check if any services were found for the adviser
+  //     if (adviserServices.length === 0) {
+  //       return res.status(200).json({ message: 'No services found for this adviser', services: [] });
+  //     }
+  
+  //     return res.status(200).json({ services: adviserServices });
+  //   } catch (error) {
+  //     console.error('Error fetching adviser services:', error);
+  //     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+  //   }
+  // };
 
   const getAllServicesByAdviser = async (req, res) => {
     const { adviserid } = req.params;
@@ -77,8 +116,7 @@ async function getAdviser(adviserid) {
     }
   
     try {
-  
-      // Fetch all services from advisers_service node
+      // Fetch all services from the advisers_service node
       const servicesSnapshot = await database.ref('advisers_service').get();
   
       if (!servicesSnapshot.exists()) {
@@ -88,16 +126,18 @@ async function getAdviser(adviserid) {
       const servicesData = servicesSnapshot.val();
       const adviserServices = [];
   
-      // Loop through all services and check for matching adviserid
+      // Loop through all services and check for matching adviserid and isPublished is true
       for (const serviceid in servicesData) {
-        if (servicesData[serviceid].adviserid === adviserid) {
-          adviserServices.push({ serviceid, ...servicesData[serviceid] });
+        const service = servicesData[serviceid];
+  
+        if (service.adviserid === adviserid && service.isPublished === true) {
+          adviserServices.push({ serviceid, ...service });
         }
       }
   
-      // Check if any services were found for the adviser
+      // Check if any published services were found for the adviser
       if (adviserServices.length === 0) {
-        return res.status(200).json({ message: 'No services found for this adviser', services: [] });
+        return res.status(200).json({ message: 'No published services found for this adviser', services: [] });
       }
   
       return res.status(200).json({ services: adviserServices });
@@ -106,6 +146,7 @@ async function getAdviser(adviserid) {
       res.status(500).json({ error: 'Something went wrong. Please try again later.' });
     }
   };
+  
 
 
   const editService = async (req, res) => {
@@ -171,11 +212,47 @@ async function getAdviser(adviserid) {
   };
 
 
-  const savePaymentDetails = async (req, res) => {
-    const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId ,meetingid} = req.body;
+  // const savePaymentDetails = async (req, res) => {
+  //   const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId ,meetingid} = req.body;
 
 
   
+  //   if (!serviceid || !userid || !adviserid || !scheduled_date || !scheduled_time || !paymentId || !meetingid) {
+  //     return res.status(400).json({ message: 'All fields are required' });
+  //   }
+  
+  //   try {
+  //     // Get the current date for the purchase
+  //     const purchased_date = new Date().toISOString();
+  
+  //     // Construct the payment details object
+  //     const paymentDetails = {
+  //       serviceid,
+  //       userid,
+  //       adviserid,
+  //       scheduled_date,
+  //       scheduled_time,
+  //       meetingid,
+  //       purchased_date
+  //     };
+  
+  //     // Save payment details in Firebase Realtime Database under the payments node with the paymentId as key
+  //     await database.ref('payments/' + paymentId).set(paymentDetails);
+  
+  //     // Return success response
+  //     return res.status(200).json({ message: 'Payment details saved successfully' });
+  
+  //   } catch (error) {
+  //     console.error('Error saving payment details:', error);
+  //     return res.status(500).json({ message: 'Failed to save payment details', error: error.message });
+  //   }
+  // };
+
+
+  const savePaymentDetails = async (req, res) => {
+    const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId, meetingid } = req.body;
+  
+    // Check for required fields
     if (!serviceid || !userid || !adviserid || !scheduled_date || !scheduled_time || !paymentId || !meetingid) {
       return res.status(400).json({ message: 'All fields are required' });
     }
@@ -192,20 +269,57 @@ async function getAdviser(adviserid) {
         scheduled_date,
         scheduled_time,
         meetingid,
-        purchased_date
+        purchased_date,
       };
   
       // Save payment details in Firebase Realtime Database under the payments node with the paymentId as key
       await database.ref('payments/' + paymentId).set(paymentDetails);
   
-      // Return success response
-      return res.status(200).json({ message: 'Payment details saved successfully' });
+      // Get the adviser's data using getAdviser function
+      const adviserData = await getAdviser(adviserid);
   
+      if (!adviserData) {
+        return res.status(404).json({ message: 'Adviser not found' });
+      }
+  
+      // Fetch the service data to get the price
+      const serviceRef = database.ref(`advisers_service/${serviceid}`);
+      const serviceSnapshot = await serviceRef.get();
+  
+      if (!serviceSnapshot.exists()) {
+        return res.status(404).json({ message: 'Service not found' });
+      }
+  
+      const serviceData = serviceSnapshot.val();
+      const servicePrice = serviceData.price;
+  
+      // Fetch current earnings of the adviser
+      const userRef = database.ref(`advisers/${adviserid}`);
+      const snapshot = await userRef.get();
+  
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        const currentEarnings = userData.earnings || 0;
+  
+        // Calculate new earnings
+        const updatedEarnings = currentEarnings + servicePrice;
+  
+        // Update adviser's earnings in the database
+        await userRef.update({
+          earnings: updatedEarnings,
+        });
+  
+        // Return success response
+        return res.status(200).json({ message: 'Payment details saved and earnings updated successfully' });
+      } else {
+        return res.status(404).json({ message: 'Adviser data not found' });
+      }
     } catch (error) {
-      console.error('Error saving payment details:', error);
-      return res.status(500).json({ message: 'Failed to save payment details', error: error.message });
+      console.error('Error saving payment details or updating earnings:', error);
+      return res.status(500).json({ message: 'Failed to save payment details or update earnings', error: error.message });
     }
   };
+  
 
 
 
@@ -453,6 +567,51 @@ const getBookingsOfUser = async (req, res) => {
 };
 
 
+// const deleteService = async (req, res) => {
+//   const { serviceid, adviserid } = req.body;
+
+//   // Validate required fields
+//   if (!serviceid || !adviserid) {
+//     return res.status(400).json({ error: 'Both serviceid and adviserid are required' });
+//   }
+
+//   try {
+//     // Check if the service exists
+//     const serviceRef = database.ref('advisers_service/' + serviceid);
+//     const serviceSnapshot = await serviceRef.once('value');
+    
+//     if (!serviceSnapshot.exists()) {
+//       return res.status(404).json({ error: 'Service not found' });
+//     }
+
+//     // Delete the service from the 'advisers_service' node
+//     await serviceRef.remove();
+
+//     // Update the adviser's service list
+//     const adviserData = await getAdviser(adviserid);
+//     const currentServices = adviserData.services || [];
+
+//     if (!currentServices.includes(serviceid)) {
+//       return res.status(404).json({ error: 'Service not associated with this adviser' });
+//     }
+
+//     // Remove the service from the adviser's services list
+//     const updatedServices = currentServices.filter(id => id !== serviceid);
+//     await database.ref('advisers/' + adviserid).update({ services: updatedServices });
+
+//     // Optional: Remove from published services if it exists in that list
+//     // const publishedServices = adviserData.published_services || [];
+//     // const updatedPublishedServices = publishedServices.filter(id => id !== serviceid);
+//     // await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
+
+//     res.status(200).json({ message: 'Service deleted successfully' });
+//   } catch (error) {
+//     console.error('Error during service deletion:', error);
+//     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
+//   }
+// };
+
+
 const deleteService = async (req, res) => {
   const { serviceid, adviserid } = req.body;
 
@@ -465,34 +624,24 @@ const deleteService = async (req, res) => {
     // Check if the service exists
     const serviceRef = database.ref('advisers_service/' + serviceid);
     const serviceSnapshot = await serviceRef.once('value');
-    
+
     if (!serviceSnapshot.exists()) {
       return res.status(404).json({ error: 'Service not found' });
     }
 
-    // Delete the service from the 'advisers_service' node
-    await serviceRef.remove();
+    // Update the service's 'isPublished' field to false
+    await serviceRef.update({ isPublished: false });
 
-    // Update the adviser's service list
+    // Update the adviser's published_service list (optional: depends on how you want to handle this)
     const adviserData = await getAdviser(adviserid);
-    const currentServices = adviserData.services || [];
 
-    if (!currentServices.includes(serviceid)) {
-      return res.status(404).json({ error: 'Service not associated with this adviser' });
-    }
-
-    // Remove the service from the adviser's services list
-    const updatedServices = currentServices.filter(id => id !== serviceid);
-    await database.ref('advisers/' + adviserid).update({ services: updatedServices });
-
-    // Optional: Remove from published services if it exists in that list
-    // const publishedServices = adviserData.published_services || [];
-    // const updatedPublishedServices = publishedServices.filter(id => id !== serviceid);
-    // await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
+    const publishedServices = adviserData.published_services || [];
+    const updatedPublishedServices = publishedServices.filter(id => id !== serviceid);
+    await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
 
     res.status(200).json({ message: 'Service deleted successfully' });
   } catch (error) {
-    console.error('Error during service deletion:', error);
+    console.error('Error during service deleting:', error);
     res.status(500).json({ error: 'Something went wrong. Please try again later.' });
   }
 };
