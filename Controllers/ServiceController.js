@@ -309,8 +309,18 @@ async function getAdviser(adviserid) {
           earnings: updatedEarnings,
         });
   
+        // Update the 'users' array inside advisers_service node
+        let usersArray = serviceData.users || []; // Get existing users array or initialize as empty array
+  
+        if (!usersArray.includes(userid)) { // Avoid duplicate entries
+          usersArray.push(userid); // Add the current userid
+        }
+  
+        // Update the users array in the database
+        await serviceRef.update({ users: usersArray });
+  
         // Return success response
-        return res.status(200).json({ message: 'Payment details saved and earnings updated successfully' });
+        return res.status(200).json({ message: 'Payment details saved, earnings updated, and users list updated successfully' });
       } else {
         return res.status(404).json({ message: 'Adviser data not found' });
       }
@@ -319,6 +329,7 @@ async function getAdviser(adviserid) {
       return res.status(500).json({ message: 'Failed to save payment details or update earnings', error: error.message });
     }
   };
+  
   
 
 
