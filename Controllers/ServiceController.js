@@ -522,6 +522,7 @@ async function getAvailableTimeSlots(req, res) {
 
 
 const getBookingsOfUser = async (req, res) => {
+  
   const { userid } = req.params;
 
   if (!userid) {

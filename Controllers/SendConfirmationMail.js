@@ -99,6 +99,7 @@ function convertDateFormat(dateString) {
 const sendConfirmationMail =  async(req, res) =>{
 
     const { userid, adviserid, serviceid, paymentid } = req.body;
+    console.log(userid, adviserid, serviceid, paymentid)
 
     const transporter = nodemailer.createTransport({
         service:"gmail",
