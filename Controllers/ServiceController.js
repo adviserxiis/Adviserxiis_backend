@@ -701,6 +701,57 @@ const deleteService = async (req, res) => {
   }
 };
 
+const getServiceDetails = async (req, res) => {
+  const { serviceid } = req.params;
+
+  if (!serviceid) {
+    return res.status(400).json({ message: 'Service ID is required' });
+  }
+
+  try {
+    // Fetch the service details by serviceid
+    const serviceSnapshot = await database
+      .ref(`advisers_service/${serviceid}`)
+      .once('value');
+
+    const serviceData = serviceSnapshot.val();
+
+    if (!serviceData) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // Fetch adviser details associated with the service
+    const adviserid = serviceData.adviserid;
+    const adviserSnapshot = await database
+      .ref(`advisers/${adviserid}`)
+      .once('value');
+
+    const adviserData = adviserSnapshot.val();
+
+    if (!adviserData) {
+      return res.status(404).json({ message: 'Adviser not found' });
+    }
+
+    // Construct the response with service and adviser details
+    const serviceDetails = {
+      ...serviceData,
+      adviserDetails: {
+        username: adviserData.username || 'N/A', // Fallback to 'N/A' if username is missing
+        email: adviserData.email || 'N/A',
+        profile_picture: adviserData.profile_photo || 'N/A',
+        professional_title: adviserData.professional_title || 'N/A',
+      },
+    };
+
+    // Return the service details and adviser information
+    return res.status(200).json({ serviceDetails });
+  } catch (error) {
+    console.error('Error fetching service details:', error);
+    return res.status(500).json({ message: 'Failed to fetch service details', error: error.message });
+  }
+};
+
+
 
 
 
@@ -713,5 +764,6 @@ export {
     getAdviserAvailability,
     getAvailableTimeSlots,
     getBookingsOfUser,
-    deleteService
+    deleteService,
+    getServiceDetails
 }
