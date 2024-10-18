@@ -212,11 +212,11 @@ async function getAdviser(adviserid) {
   };
 
 
+
   // const savePaymentDetails = async (req, res) => {
-  //   const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId ,meetingid} = req.body;
-
-
+  //   const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId, meetingid } = req.body;
   
+  //   // Check for required fields
   //   if (!serviceid || !userid || !adviserid || !scheduled_date || !scheduled_time || !paymentId || !meetingid) {
   //     return res.status(400).json({ message: 'All fields are required' });
   //   }
@@ -233,22 +233,67 @@ async function getAdviser(adviserid) {
   //       scheduled_date,
   //       scheduled_time,
   //       meetingid,
-  //       purchased_date
+  //       purchased_date,
   //     };
   
   //     // Save payment details in Firebase Realtime Database under the payments node with the paymentId as key
   //     await database.ref('payments/' + paymentId).set(paymentDetails);
   
-  //     // Return success response
-  //     return res.status(200).json({ message: 'Payment details saved successfully' });
+  //     // Get the adviser's data using getAdviser function
+  //     const adviserData = await getAdviser(adviserid);
   
+  //     if (!adviserData) {
+  //       return res.status(404).json({ message: 'Adviser not found' });
+  //     }
+  
+  //     // Fetch the service data to get the price
+  //     const serviceRef = database.ref(`advisers_service/${serviceid}`);
+  //     const serviceSnapshot = await serviceRef.get();
+  
+  //     if (!serviceSnapshot.exists()) {
+  //       return res.status(404).json({ message: 'Service not found' });
+  //     }
+  
+  //     const serviceData = serviceSnapshot.val();
+  //     const servicePrice = serviceData.price;
+  
+  //     // Fetch current earnings of the adviser
+  //     const userRef = database.ref(`advisers/${adviserid}`);
+  //     const snapshot = await userRef.get();
+  
+  //     if (snapshot.exists()) {
+  //       const userData = snapshot.val();
+  //       const currentEarnings = userData.earnings || 0;
+  
+  //       // Calculate new earnings
+  //       const updatedEarnings = currentEarnings + servicePrice;
+  
+  //       // Update adviser's earnings in the database
+  //       await userRef.update({
+  //         earnings: updatedEarnings,
+  //       });
+  
+  //       // Update the 'users' array inside advisers_service node
+  //       let usersArray = serviceData.users || []; // Get existing users array or initialize as empty array
+  
+  //       if (!usersArray.includes(userid)) { // Avoid duplicate entries
+  //         usersArray.push(userid); // Add the current userid
+  //       }
+  
+  //       // Update the users array in the database
+  //       await serviceRef.update({ users: usersArray });
+  
+  //       // Return success response
+  //       return res.status(200).json({ message: 'Payment details saved, earnings updated, and users list updated successfully' });
+  //     } else {
+  //       return res.status(404).json({ message: 'Adviser data not found' });
+  //     }
   //   } catch (error) {
-  //     console.error('Error saving payment details:', error);
-  //     return res.status(500).json({ message: 'Failed to save payment details', error: error.message });
+  //     console.error('Error saving payment details or updating earnings:', error);
+  //     return res.status(500).json({ message: 'Failed to save payment details or update earnings', error: error.message });
   //   }
   // };
-
-
+  
   const savePaymentDetails = async (req, res) => {
     const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId, meetingid } = req.body;
   
@@ -291,7 +336,7 @@ async function getAdviser(adviserid) {
       }
   
       const serviceData = serviceSnapshot.val();
-      const servicePrice = serviceData.price;
+      const servicePrice = Number(serviceData.price); // Convert to number
   
       // Fetch current earnings of the adviser
       const userRef = database.ref(`advisers/${adviserid}`);
@@ -299,7 +344,7 @@ async function getAdviser(adviserid) {
   
       if (snapshot.exists()) {
         const userData = snapshot.val();
-        const currentEarnings = userData.earnings || 0;
+        const currentEarnings = Number(userData.earnings || 0); // Convert to number
   
         // Calculate new earnings
         const updatedEarnings = currentEarnings + servicePrice;
@@ -329,7 +374,6 @@ async function getAdviser(adviserid) {
       return res.status(500).json({ message: 'Failed to save payment details or update earnings', error: error.message });
     }
   };
-  
   
 
 
