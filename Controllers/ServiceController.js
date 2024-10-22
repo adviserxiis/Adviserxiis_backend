@@ -213,6 +213,8 @@ async function getAdviser(adviserid) {
 
 
 
+
+  
   // const savePaymentDetails = async (req, res) => {
   //   const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId, meetingid } = req.body;
   
@@ -255,7 +257,7 @@ async function getAdviser(adviserid) {
   //     }
   
   //     const serviceData = serviceSnapshot.val();
-  //     const servicePrice = serviceData.price;
+  //     const servicePrice = Number(serviceData.price); // Convert to number
   
   //     // Fetch current earnings of the adviser
   //     const userRef = database.ref(`advisers/${adviserid}`);
@@ -263,7 +265,7 @@ async function getAdviser(adviserid) {
   
   //     if (snapshot.exists()) {
   //       const userData = snapshot.val();
-  //       const currentEarnings = userData.earnings || 0;
+  //       const currentEarnings = Number(userData.earnings || 0); // Convert to number
   
   //       // Calculate new earnings
   //       const updatedEarnings = currentEarnings + servicePrice;
@@ -293,7 +295,7 @@ async function getAdviser(adviserid) {
   //     return res.status(500).json({ message: 'Failed to save payment details or update earnings', error: error.message });
   //   }
   // };
-  
+
   const savePaymentDetails = async (req, res) => {
     const { serviceid, userid, adviserid, scheduled_date, scheduled_time, paymentId, meetingid } = req.body;
   
@@ -306,7 +308,22 @@ async function getAdviser(adviserid) {
       // Get the current date for the purchase
       const purchased_date = new Date().toISOString();
   
-      // Construct the payment details object
+      // Fetch the service data to get the price
+      const serviceRef = database.ref(`advisers_service/${serviceid}`);
+      const serviceSnapshot = await serviceRef.get();
+  
+      if (!serviceSnapshot.exists()) {
+        return res.status(404).json({ message: 'Service not found' });
+      }
+  
+      const serviceData = serviceSnapshot.val();
+      const servicePrice = Number(serviceData.price); // Convert to number
+  
+      // Calculate 80% for adviser earnings and 20% for company profit
+      const adviserEarnings = Math.round(servicePrice * 0.8); // Round to nearest whole number
+      const companyProfit = Math.round(servicePrice * 0.2); // Round to nearest whole number
+  
+      // Construct the payment details object, including company profit
       const paymentDetails = {
         serviceid,
         userid,
@@ -315,6 +332,7 @@ async function getAdviser(adviserid) {
         scheduled_time,
         meetingid,
         purchased_date,
+        company_profit: companyProfit, // Add company profit here
       };
   
       // Save payment details in Firebase Realtime Database under the payments node with the paymentId as key
@@ -327,17 +345,6 @@ async function getAdviser(adviserid) {
         return res.status(404).json({ message: 'Adviser not found' });
       }
   
-      // Fetch the service data to get the price
-      const serviceRef = database.ref(`advisers_service/${serviceid}`);
-      const serviceSnapshot = await serviceRef.get();
-  
-      if (!serviceSnapshot.exists()) {
-        return res.status(404).json({ message: 'Service not found' });
-      }
-  
-      const serviceData = serviceSnapshot.val();
-      const servicePrice = Number(serviceData.price); // Convert to number
-  
       // Fetch current earnings of the adviser
       const userRef = database.ref(`advisers/${adviserid}`);
       const snapshot = await userRef.get();
@@ -347,7 +354,7 @@ async function getAdviser(adviserid) {
         const currentEarnings = Number(userData.earnings || 0); // Convert to number
   
         // Calculate new earnings
-        const updatedEarnings = currentEarnings + servicePrice;
+        const updatedEarnings = currentEarnings + adviserEarnings;
   
         // Update adviser's earnings in the database
         await userRef.update({
@@ -374,6 +381,7 @@ async function getAdviser(adviserid) {
       return res.status(500).json({ message: 'Failed to save payment details or update earnings', error: error.message });
     }
   };
+  
   
 
 
