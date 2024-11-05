@@ -760,6 +760,202 @@ const getServiceDetails = async (req, res) => {
   }
 };
 
+const getAllServices = async (req, res) => {
+  const serviceRef = database.ref('advisers_service');
+  const advisersRef = database.ref('advisers'); // Assuming advisers are stored in 'advisers' node
+
+  try {
+    // Fetch all services at once
+    const serviceSnapshot = await serviceRef.once('value');
+    if (!serviceSnapshot.exists()) {
+      console.log('No services available');
+      return res.status(200).json([]);
+    }
+
+    // Filter and collect published services
+    const services = [];
+    serviceSnapshot.forEach(childSnapshot => {
+      const serviceData = childSnapshot.val();
+      if (serviceData.isPublished) {
+        services.push({ data: serviceData, id: childSnapshot.key });
+      }
+    });
+
+    // Get all unique adviser IDs from the services to reduce multiple fetches
+    const adviserIds = [...new Set(services.map(service => service.data.adviserid))];
+    
+    // Fetch all advisers with these IDs in one request
+    const advisersSnapshot = await advisersRef.once('value');
+    const advisersData = advisersSnapshot.val();
+
+    // Map each adviser ID to selective fields (username, profile_photo)
+    const adviserDetailsMap = {};
+    adviserIds.forEach(adviserId => {
+      const adviser = advisersData[adviserId];
+      if (adviser) {
+        adviserDetailsMap[adviserId] = {
+          username: adviser.username,
+          profile_photo: adviser.profile_photo,
+          professional_title:adviser.professional_title
+        };
+      }
+    });
+
+    // Attach only selected adviser details to each service
+    const serviceDetails = services.map(service => ({
+      ...service,
+      adviser: adviserDetailsMap[service.data.adviserid] || null,
+    }));
+
+    res.status(200).json(serviceDetails);
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+const searchServices = async (req, res) => {
+  const { key } = req.params;
+  const serviceRef = database.ref('advisers_service');
+  const advisersRef = database.ref('advisers');
+
+  if (!key) {
+    return res.status(400).json({ error: 'Search key is required' });
+  }
+
+  try {
+    const lowerCaseKey = key.toLowerCase();
+
+    // Step 1: Fetch all services and advisers in one go
+    const [serviceSnapshot, advisersSnapshot] = await Promise.all([
+      serviceRef.once('value'),
+      advisersRef.once('value'),
+    ]);
+
+    if (!serviceSnapshot.exists() || !advisersSnapshot.exists()) {
+      console.log('No services or advisers available');
+      return res.status(200).json([]);
+    }
+
+    const advisersData = advisersSnapshot.val();
+    const services = [];
+    const adviserDetailsMap = {};
+
+    // Step 2: Populate services and map adviser details
+    serviceSnapshot.forEach(childSnapshot => {
+      const serviceData = childSnapshot.val();
+      if (serviceData.isPublished) {
+        services.push({ data: serviceData, id: childSnapshot.key });
+        
+        // Store adviser details for matching later
+        if (advisersData[serviceData.adviserid]) {
+          adviserDetailsMap[serviceData.adviserid] = {
+            username: advisersData[serviceData.adviserid].username,
+            profile_photo: advisersData[serviceData.adviserid].profile_photo,
+            professional_title: advisersData[serviceData.adviserid].professional_title,
+          };
+        }
+      }
+    });
+
+    // Step 3: Filter services based on service_name or adviser username
+    const matchedServices = services.filter(service => {
+      const isServiceNameMatch = service.data.service_name?.toLowerCase().includes(lowerCaseKey);
+      const adviserUsername = adviserDetailsMap[service.data.adviserid]?.username.toLowerCase() || '';
+      return isServiceNameMatch || adviserUsername.includes(lowerCaseKey);
+    }).map(service => ({
+      ...service,
+      adviser: adviserDetailsMap[service.data.adviserid] || null,
+    }));
+
+    return res.status(200).json(matchedServices);
+  } catch (error) {
+    console.error('Error searching services:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
+// const searchServices = async (req, res) => {
+//   const { key } = req.params;
+//   const serviceRef = database.ref('advisers_service');
+//   const advisersRef = database.ref('advisers');
+
+//   if (!key) {
+//     return res.status(400).json({ error: 'Search key is required' });
+//   }
+
+//   try {
+//     const lowerCaseKey = key.toLowerCase();
+    
+//     // Step 1: Fetch all services and advisers in one go
+//     const serviceSnapshot = await serviceRef.once('value');
+//     const advisersSnapshot = await advisersRef.once('value');
+
+//     if (!serviceSnapshot.exists() || !advisersSnapshot.exists()) {
+//       console.log('No services or advisers available');
+//       return res.status(200).json([]);
+//     }
+
+//     // Step 2: Prepare services and advisers data
+//     const services = [];
+//     const adviserMap = {};
+    
+//     // Process services
+//     serviceSnapshot.forEach(childSnapshot => {
+//       const serviceData = childSnapshot.val();
+//       if (serviceData.isPublished) {
+//         services.push({ data: serviceData, id: childSnapshot.key });
+//       }
+//     });
+
+//     // Process advisers into a map for quick access
+//     advisersSnapshot.forEach(childSnapshot => {
+//       const adviserData = childSnapshot.val();
+//       adviserMap[childSnapshot.key] = {
+//         username: adviserData.username,
+//         profile_photo: adviserData.profile_photo,
+//         professional_title: adviserData.professional_title,
+//       };
+//     });
+
+//     // Step 3: Filter services based on service_name and adviser username
+//     const matchedByServiceName = [];
+//     const matchedByAdviserName = [];
+
+//     for (const service of services) {
+//       // Match by service name
+//       if (service.data.service_name && service.data.service_name.toLowerCase().includes(lowerCaseKey)) {
+//         matchedByServiceName.push({
+//           ...service,
+//           adviser: adviserMap[service.data.adviserid] || null,
+//         });
+//       }
+
+//       // Match by adviser username if not matched by service name
+//       const adviser = adviserMap[service.data.adviserid];
+//       if (adviser && adviser.username.toLowerCase().includes(lowerCaseKey)) {
+//         matchedByAdviserName.push({
+//           ...service,
+//           adviser,
+//         });
+//       }
+//     }
+
+//     // Step 4: Combine results, with service name matches first
+//     const combinedResults = [...matchedByServiceName, ...matchedByAdviserName];
+//     return res.status(200).json(combinedResults);
+//   } catch (error) {
+//     console.error('Error searching services:', error);
+//     return res.status(500).json({ error: 'Internal server error' });
+//   }
+// };
+
+
+
+
+
+
 
 
 
@@ -774,5 +970,7 @@ export {
     getAvailableTimeSlots,
     getBookingsOfUser,
     deleteService,
-    getServiceDetails
+    getServiceDetails,
+    getAllServices,
+    searchServices
 }
