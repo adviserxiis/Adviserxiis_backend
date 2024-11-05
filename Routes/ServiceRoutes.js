@@ -15,6 +15,7 @@ router.route('/getbookingsofuser/:userid').get(getBookingsOfUser)
 router.route('/getservicedetails/:serviceid').get(getServiceDetails)
 router.route('/getallservices/').get(getAllServices)
 router.route('/searchservices/:key').get(searchServices)
+router.route('/searchservices/').get(searchServices)
 
 
 export default router

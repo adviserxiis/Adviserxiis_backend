@@ -819,13 +819,7 @@ const searchServices = async (req, res) => {
   const serviceRef = database.ref('advisers_service');
   const advisersRef = database.ref('advisers');
 
-  if (!key) {
-    return res.status(400).json({ error: 'Search key is required' });
-  }
-
   try {
-    const lowerCaseKey = key.toLowerCase();
-
     // Step 1: Fetch all services and advisers in one go
     const [serviceSnapshot, advisersSnapshot] = await Promise.all([
       serviceRef.once('value'),
@@ -858,7 +852,18 @@ const searchServices = async (req, res) => {
       }
     });
 
-    // Step 3: Filter services based on service_name or adviser username
+    // Step 3: Check if the search key is blank or undefined
+    if (!key || key.trim() === '') {
+      // If no key provided, return all published services with adviser details
+      const allServicesWithAdvisers = services.map(service => ({
+        ...service,
+        adviser: adviserDetailsMap[service.data.adviserid] || null,
+      }));
+      return res.status(200).json(allServicesWithAdvisers);
+    }
+
+    // Step 4: Filter services based on service_name or adviser username
+    const lowerCaseKey = key.toLowerCase();
     const matchedServices = services.filter(service => {
       const isServiceNameMatch = service.data.service_name?.toLowerCase().includes(lowerCaseKey);
       const adviserUsername = adviserDetailsMap[service.data.adviserid]?.username.toLowerCase() || '';
@@ -874,6 +879,7 @@ const searchServices = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 
 
 // const searchServices = async (req, res) => {
