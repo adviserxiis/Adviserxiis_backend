@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import { sendMail } from './Controllers/SendMail.js';
+import { sendEnquiryMail, sendMail } from './Controllers/SendMail.js';
 import { sendConfirmationMail } from './Controllers/SendConfirmationMail.js';
 import timeout from 'connect-timeout'; 
 import Razorpay from 'razorpay';
@@ -85,6 +85,8 @@ try {
   })
 
 app.get('/sendemail/:userId', sendMail)
+
+app.post('/sendenquirymail', sendEnquiryMail)
 
 app.get('/changepassword/:userId', sendChangePasswordOtp)
 

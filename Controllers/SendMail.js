@@ -96,4 +96,35 @@ const sendMail =  async(req, res) =>{
       main().catch(console.error);
 } 
 
-export { sendMail }
+
+const sendEnquiryMail = async (req, res)=>{
+  const { senderEmail, subject, description, mobileNumber } = req.body;
+
+    // Configure nodemailer with your email service
+    const transporter = nodemailer.createTransport({
+        service: 'gmail', // or your preferred service
+        auth: {
+            user: 'adviserxiis@gmail.com',
+            pass: 'ziwo lsoq xeaj vran',
+        },
+    });
+
+    // Include the mobile number in the email text
+    const mailOptions = {
+        from: senderEmail,
+        to: 'adviserxiis@gmail.com',
+        subject,
+        text: `Description: ${description}\nMobile Number: ${mobileNumber}`, // Add mobile number to email text
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        res.status(200).send('Email sent successfully');
+    } catch (error) {
+        res.status(500).send('Error sending email');
+    }
+}
+
+export { sendMail,
+  sendEnquiryMail
+ }
