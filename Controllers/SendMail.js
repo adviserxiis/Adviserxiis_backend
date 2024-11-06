@@ -115,6 +115,7 @@ const sendEnquiryMail = async (req, res)=>{
         to: 'adviserxiis@gmail.com',
         subject,
         text: `Description: ${description}\nMobile Number: ${mobileNumber}`, // Add mobile number to email text
+        replyTo: senderEmail, // Ensures replies go to the sender's email
     };
 
     try {
