@@ -100,6 +100,11 @@ const sendMail =  async(req, res) =>{
 const sendEnquiryMail = async (req, res)=>{
   const { senderEmail, subject, description, mobileNumber } = req.body;
 
+  if(!senderEmail || !subject || !description || !mobileNumber)
+  {
+    return res.status(400).json({ error: 'sende email, subject , description and mobile number is required!!' });
+  }
+
     // Configure nodemailer with your email service
     const transporter = nodemailer.createTransport({
         service: 'gmail', // or your preferred service
@@ -120,9 +125,9 @@ const sendEnquiryMail = async (req, res)=>{
 
     try {
         await transporter.sendMail(mailOptions);
-        res.status(200).send('Email sent successfully');
+        res.status(200).json('Email sent successfully');
     } catch (error) {
-        res.status(500).send('Error sending email');
+        res.status(500).json('Error sending email');
     }
 }
 
