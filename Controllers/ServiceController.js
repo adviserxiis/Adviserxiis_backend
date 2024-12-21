@@ -796,7 +796,8 @@ const getAllServices = async (req, res) => {
         adviserDetailsMap[adviserId] = {
           username: adviser.username,
           profile_photo: adviser.profile_photo,
-          professional_title:adviser.professional_title
+          professional_title:adviser.professional_title,
+          followers:adviser.followers,
         };
       }
     });
