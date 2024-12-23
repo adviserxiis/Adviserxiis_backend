@@ -116,6 +116,55 @@ const getAllReelsWithAdviser = async (req, res) => {
   }
 };
 
+const getAllReelsWithPagination = async (req, res) => {
+  const nodeRef = database.ref('advisers_posts');
+
+  try {
+    const { lowerLimit, upperLimit } = req.body; // Extract pagination limits from req.body
+    if (lowerLimit === undefined || upperLimit === undefined || lowerLimit < 0 || upperLimit <= lowerLimit) {
+      return res.status(400).json({ error: 'Invalid lowerLimit or upperLimit' });
+    }
+
+    const snapshot = await nodeRef.once('value');
+    if (snapshot.exists()) {
+      const posts = [];
+
+      // Filter posts with file_type = "video" or "contest_video"
+      snapshot.forEach(childSnapshot => {
+        const postData = childSnapshot.val();
+        if (postData.file_type === "video" || postData.file_type === 'contest_video') {
+          posts.push({ data: postData, id: childSnapshot.key });
+        }
+      });
+
+      // Sort by date
+      posts.sort((a, b) => {
+        const dateA = new Date(a.data.dop).getTime();
+        const dateB = new Date(b.data.dop).getTime();
+        return dateB - dateA;
+      });
+
+      // Paginate posts based on limits
+      const paginatedPosts = posts.slice(lowerLimit, upperLimit);
+
+      const details = await Promise.all(
+        paginatedPosts.map(async (post) => {
+          const adviser = await getAdviser(post.data.adviserid);
+          return { ...post, adviser };
+        })
+      );
+
+      res.status(200).json(details);
+    } else {
+      console.log('No data available');
+      res.status(200).json([]);
+    }
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 const getAllPostsForHome = async (req, res) => {
   const nodeRef = database.ref('advisers_posts');
@@ -945,6 +994,7 @@ export {
     createMediaPost,
     addComment,
     fetchCommentsWithAdviserDetails,
-    deleteComment
+    deleteComment,
+    getAllReelsWithPagination
 
 }
