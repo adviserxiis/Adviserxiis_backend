@@ -797,6 +797,7 @@ const getAllServices = async (req, res) => {
           username: adviser.username,
           profile_photo: adviser.profile_photo,
           professional_title:adviser.professional_title,
+          professional_bio:adviser.professional_bio,
           followers:adviser.followers,
         };
       }
