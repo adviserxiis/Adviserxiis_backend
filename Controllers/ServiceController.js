@@ -24,7 +24,6 @@ async function getAdviser(adviserid) {
   const createService = async (req, res) => {
   
     const { adviserid, service_name, about_service, duration, price,tags, isPublished} = req.body;
-    console.log("tags", tags)
     // Validate required fields
     if (!adviserid || !service_name || !about_service || !duration || !price ) {
       return res.status(400).json({ error: 'All fields (adviserid, service_name, about_service, duration, price) are required' });
@@ -52,19 +51,19 @@ async function getAdviser(adviserid) {
         }
   
       // Save the service data to the database
-      // await database.ref('advisers_service/' + serviceid).set(serviceData);
+      await database.ref('advisers_service/' + serviceid).set(serviceData);
   
-      // // Update the adviser's service list
-      // const adviserData = await getAdviser(adviserid);
-      // const currentServices = adviserData.services || [];
-      // const updatedServices = [...currentServices, serviceid];
-      // await database.ref('advisers/' + adviserid).update({ services: updatedServices });
+      // Update the adviser's service list
+      const adviserData = await getAdviser(adviserid);
+      const currentServices = adviserData.services || [];
+      const updatedServices = [...currentServices, serviceid];
+      await database.ref('advisers/' + adviserid).update({ services: updatedServices });
   
-      // // If the service is published, update the published_services list
+      // If the service is published, update the published_services list
 
-      //   const publishedServices = adviserData.published_services || [];
-      //   const updatedPublishedServices = [...publishedServices, serviceid];
-      //   await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
+        const publishedServices = adviserData.published_services || [];
+        const updatedPublishedServices = [...publishedServices, serviceid];
+        await database.ref('advisers/' + adviserid).update({ published_services: updatedPublishedServices });
       
   
       res.status(200).json({ message: 'Service created successfully!!!', serviceData });
