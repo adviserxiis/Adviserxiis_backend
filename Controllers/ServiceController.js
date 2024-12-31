@@ -156,7 +156,7 @@ async function getAdviser(adviserid) {
 
 
   const editService = async (req, res) => {
-    const { serviceid, adviserid, service_name, about_service, duration, price, isPublished } = req.body;
+    const { serviceid, adviserid, service_name, about_service, duration, price, tags, isPublished } = req.body;
   
     // Validate required fields
     if (!serviceid || !adviserid) {
@@ -186,6 +186,7 @@ async function getAdviser(adviserid) {
         about_service: about_service || serviceData.about_service,
         duration: duration || serviceData.duration,
         price: price || serviceData.price,
+        tags: tags || serviceData.tags || []
         // isPublished: typeof isPublished === 'boolean' ? isPublished : serviceData.isPublished,
         // updated_at: new Date().toString()
       };
